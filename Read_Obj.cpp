@@ -14,7 +14,7 @@ int main(){
   FILE * myObject;
   int k_v = 0, k_vn=0, k_vf=0, t;
 
-  myObject = fopen("pyramid.obj", "r");
+  myObject = fopen("2D-mesh.obj", "r");
 
 //-----------------------------------------------------------------
   while (s != "v"){
@@ -28,7 +28,7 @@ int main(){
  }while (s != "vt");
 
   fclose(myObject);
-  myObject = fopen("pyramid.obj", "r");
+  myObject = fopen("2D-mesh.obj", "r");
   int number_of_vertices = k_v;
   float* V = new float[3*number_of_vertices];
 
@@ -57,7 +57,7 @@ int main(){
   }while (s == "vn");
 
   fclose(myObject);
-  myObject = fopen("pyramid.obj", "r");
+  myObject = fopen("2D-mesh.obj", "r");
 
   int number_of_normals = k_vn;
   float* N = new float[3*number_of_normals];
@@ -77,7 +77,7 @@ int main(){
 //--------------------------------------------------------------------
 
   fclose(myObject);
-  myObject = fopen("pyramid.obj", "r");
+  myObject = fopen("2D-mesh.obj", "r");
   fscanf(myObject, "%s %f %f %f" , str, &f1, &f2, &f3);
   s = str; 
   while (s != "vn"){
@@ -96,9 +96,9 @@ int main(){
   }while(t!=EOF);
 
   fclose(myObject);
-  myObject = fopen("pyramid.obj", "r");
+  myObject = fopen("2D-mesh.obj", "r");
   fclose(myObject);
-  myObject = fopen("pyramid.obj", "r");
+  myObject = fopen("2D-mesh.obj", "r");
   fscanf(myObject, "%s %f %f %f" , str, &f1, &f2, &f3);
   s = str; 
   while (s != "vn"){
