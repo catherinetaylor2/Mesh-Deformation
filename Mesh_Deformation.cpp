@@ -19,7 +19,7 @@
 
 int main(){
 
-    ObjFile mesh("2D-mesh.obj");
+    ObjFile mesh("square.obj");
     float* V = mesh.get_vertices();
     float* N = mesh.get_normals();
     int* FV = mesh.get_faceV();
@@ -50,52 +50,31 @@ int main(){
     glewInit();
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
     GLuint programID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/vertex_shader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/fragment_shader.fragmentshader" );
-    
-//   float vertices[] = {
-//      0.0f,  0.5f, 0.0f, // Vertex 1 (X, Y)
-//      0.5f, -0.5f, 0.0f, // Vertex 2 (X, Y)
-//     -0.5f, -0.5f, 0.0f  // Vertex 3 (X, Y)
-// };
 
-float vertices [9*4];
+float vertices [9*200];
 
-// int c1 = FV[0]-1, c2 = FV[1]-1, c3 = FV[2]-1;
-// int i=0;
-//  vertices[i] = V[3*c1];
-//      vertices[i+2] = V[3*c1+1];
-//      vertices[i+1] = V[3*c1+2];
-//      vertices[i+3] = V[3*c2];
-//      vertices[i+5] = V[3*c2+1];
-//      vertices[i+4] = V[3*c2+2];
-//      vertices[i+6] = V[3*c3];
-//      vertices[i+8] = V[3*c3+1];
-//      vertices[i+7] = V[3*c3+2];
 int k=0;
 for (int i=0; i<9*F; i+=9){
     int c1 = FV[k]-1, c2 = FV[k+1]-1, c3 = FV[k+2]-1;
-     vertices[i] = V[3*c1];
-     vertices[i+2] = V[3*c1+1];
-     vertices[i+1] = V[3*c1+2];
-     vertices[i+3] = V[3*c2];
-     vertices[i+5] = V[3*c2+1];
-     vertices[i+4] = V[3*c2+2];
-     vertices[i+6] = V[3*c3];
-     vertices[i+8] = V[3*c3+1];
-     vertices[i+7] = V[3*c3+2];
-
-    k=k+3;
-  
-
+    vertices[i] = V[3*c1];
+    vertices[i+2] = V[3*c1+1];
+    vertices[i+1] = V[3*c1+2];
+    vertices[i+3] = V[3*c2];
+    vertices[i+5] = V[3*c2+1];
+    vertices[i+4] = V[3*c2+2];
+    vertices[i+6] = V[3*c3];
+    vertices[i+8] = V[3*c3+1];
+    vertices[i+7] = V[3*c3+2];
+    k=k+3; 
 }
-for (int i=0; i<9*F;i++){
-    std::cout<<"Vi "<<vertices[i]<<" ";
-}
+
 
 GLuint vertexBuffer;
 glGenBuffers(1, &vertexBuffer);
