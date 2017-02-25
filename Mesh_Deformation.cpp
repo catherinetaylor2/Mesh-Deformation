@@ -33,28 +33,20 @@ if(window==nullptr){
     glfwTerminate();
     return -1;
 }
-// while(!glfwWindowShouldClose(window)){
-//     glfwSwapBuffers(window);
-//     glfwPollEvents();
-// }
 
 glewExperimental = GL_TRUE;
 glfwMakeContextCurrent(window);
 glewInit();
 
      glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-//     glClearColor(1.0f, 1.0f, 1.0f, 0.0f); //makes the screen blue.
-    
+     
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
     
-//     // Create and compile our GLSL program from the shaders
 GLuint programID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/vertex_shader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/fragment_shader.fragmentshader" );
     
-    //C:\Users\catta\OneDrive\Documents\Course work\Computer animation and games 2\Mesh-Deformation
-
-float vertices[] = {
+  float vertices[] = {
      0.0f,  0.5f, 0.0f, // Vertex 1 (X, Y)
      0.5f, -0.5f, 0.0f, // Vertex 2 (X, Y)
     -0.5f, -0.5f, 0.0f  // Vertex 3 (X, Y)
