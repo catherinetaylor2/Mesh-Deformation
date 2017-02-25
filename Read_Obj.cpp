@@ -16,6 +16,7 @@ ObjFile::ObjFile(const char* name){
   std::string s = "a";
   FILE * myObject;
   int k_v = 0;
+
   myObject = fopen(File_Name, "r");
 
   while (s != "v"){
@@ -52,7 +53,9 @@ float* ObjFile::get_normals(void){
   std::string s = "a";
   FILE * myObject;
   int k_vn=0;
+
   myObject = fopen(File_Name, "r");
+
 
   while (s != "vn"){
     fscanf(myObject, "%s %f %f %f" , str, &f1, &f2, &f3);
@@ -67,6 +70,7 @@ float* ObjFile::get_normals(void){
 
   fclose(myObject);
   myObject = fopen(File_Name, "r");
+
   number_of_normals = k_vn;
   float* N = new float[3*number_of_normals];
 
@@ -82,7 +86,7 @@ float* ObjFile::get_normals(void){
     fscanf(myObject, "%s %f %f %f" , str, &f1, &f2, &f3);
   }
 
-  return N;
+return N;
 }
 
 int* ObjFile::get_faceV(void){
@@ -124,8 +128,9 @@ int* ObjFile::get_faceV(void){
     s = str;
   }
 
-  int number_of_faces = k_vf-1;
+  number_of_faces = k_vf-1;
   int* FV = new int[3*number_of_faces];
+
   for(int i=0; i<3*number_of_faces; i+=3){
     fscanf(myObject, "%s %f %c %f %c %f %f %c %f %c %f %f %c %f %c %f", str, &f1, &c1, &f2, &c2, &f3, &f4, &c3, &f5, &c4, &f6, &f7, &c5, &f8, &c6, &f9);
     s=str;
@@ -159,6 +164,7 @@ int* ObjFile::get_faceN(void){
     k_vf=k_vf+1;
     t=fscanf(myObject, "%s %f %c %f %c %f %f %c %f %c %f %f %c %f %c %f", str, &f1, &c1, &f2, &c2, &f3, &f4, &c3, &f5, &c4, &f6, &f7, &c5, &f8, &c6, &f9);
   }while(t!=EOF);
+
  
   fclose(myObject);
   myObject = fopen(File_Name, "r");
@@ -168,11 +174,14 @@ int* ObjFile::get_faceN(void){
     fscanf(myObject, "%s %f %f %f" , str, &f1, &f2, &f3);
     s = str;  
   }
+
   for(int i=0; i< number_of_normals-1; i++){
     fscanf(myObject, "%s %f %f %f" , str, &f1, &f2, &f3);
     s = str;
   }
-  number_of_faces = k_vf-1;
+
+number_of_faces = k_vf-1;
+std::cout<<"face "<<number_of_faces<<"\n";
   int* FN = new int[3*number_of_faces];
 
   for(int i=0; i<3*number_of_faces; i+=3){
@@ -184,3 +193,23 @@ int* ObjFile::get_faceN(void){
   }
   return FN;
 }
+
+int ObjFile::get_number_of_faces(void){
+  return number_of_faces;
+}
+
+// int main(){
+
+//   ObjFile mesh("2D-mesh.obj");
+
+//   float* V = mesh.get_vertices();
+//   float* N = mesh.get_normals();
+//   int* FV = mesh.get_faceV();
+//   int* FN = mesh.get_faceN();
+  
+//   for(int i=0; i<12; i+=3){
+//     std::cout<<"V1 "<<FN[i]<<"V2 "<<FN[i+1]<<"V3 "<<FN[i+2]<<"\n";
+//   }
+
+//     return 0;
+// }
