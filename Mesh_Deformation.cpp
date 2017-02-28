@@ -104,9 +104,9 @@ do{
 								0//offset, so where the data starts
 		);
 
-//for(int i=0; i<F; i++){
-          glDrawArrays(GL_LINE_LOOP, 3*F, 3); // 3 indices starting at 0 -> 1 triangle
-//}
+for(int i=0; i<F; i++){
+          glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
+}
             glDisableVertexAttribArray(0);
         
        // Swap buffers
