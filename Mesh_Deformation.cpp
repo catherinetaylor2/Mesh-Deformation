@@ -19,7 +19,7 @@
 
 int main(){
 
-    ObjFile mesh("square.obj");
+    ObjFile mesh("dino.obj");
     float* V = mesh.get_vertices();
     float* N = mesh.get_normals();
     int* FV = mesh.get_faceV();
@@ -58,20 +58,20 @@ int main(){
 
     GLuint programID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/vertex_shader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/fragment_shader.fragmentshader" );
 
-float vertices [9*200];
+float vertices [9*187];
 
 int k=0;
 for (int i=0; i<9*F; i+=9){
     int c1 = FV[k]-1, c2 = FV[k+1]-1, c3 = FV[k+2]-1;
-    vertices[i] = V[3*c1];
-    vertices[i+2] = V[3*c1+1];
-    vertices[i+1] = V[3*c1+2];
-    vertices[i+3] = V[3*c2];
-    vertices[i+5] = V[3*c2+1];
-    vertices[i+4] = V[3*c2+2];
-    vertices[i+6] = V[3*c3];
-    vertices[i+8] = V[3*c3+1];
-    vertices[i+7] = V[3*c3+2];
+    vertices[i] = 0.065*V[3*c1];
+    vertices[i+2] = 0.065*V[3*c1+1];
+    vertices[i+1] = 0.065*V[3*c1+2];
+    vertices[i+3] = 0.065*V[3*c2];
+    vertices[i+5] = 0.065*V[3*c2+1];
+    vertices[i+4] = 0.065*V[3*c2+2];
+    vertices[i+6] = 0.065*V[3*c3];
+    vertices[i+8] = 0.065*V[3*c3+1];
+    vertices[i+7] = 0.065*V[3*c3+2];
     k=k+3; 
 }
 
@@ -104,9 +104,9 @@ do{
 								0//offset, so where the data starts
 		);
 
-for(int i=0; i<F; i++){
-          glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
-}
+//for(int i=0; i<F; i++){
+          glDrawArrays(GL_LINE_LOOP, 3*F, 3); // 3 indices starting at 0 -> 1 triangle
+//}
             glDisableVertexAttribArray(0);
         
        // Swap buffers
@@ -118,6 +118,18 @@ for(int i=0; i<F; i++){
 
  while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
           glfwWindowShouldClose(window) == 0 );
+
+
+
+glDeleteBuffers(1, &vertexBuffer);
+glDeleteVertexArrays(1, &VertexArrayID);
+glDeleteProgram(programID);
+std::cout<<"127\n";
+delete V;
+delete N;
+delete FN;
+delete FV;
+
 
   glfwTerminate();
 
