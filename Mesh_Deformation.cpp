@@ -38,16 +38,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){
-
-
-float x = (float)(-2.0f*mouse_x)/width + 1, y = (float)(2.0f*mouse_y)/height - 1;
-
+    float x = (float)(-2.0f*mouse_x)/width + 1, y = (float)(2.0f*mouse_y)/height - 1;
     glm::vec4 V = glm::vec4(x, y, 0, 1);
     glm::vec4 world_coords = invProj*V;
     p.x = world_coords.x*world_coords.z/world_coords.w;
     p.y = world_coords.y*world_coords.z/world_coords.w;
-
-
 }
 
 
@@ -59,9 +54,6 @@ int main(){
     int* FV = mesh.get_faceV();
     int* FN = mesh.get_faceN();
     int F = mesh.get_number_of_faces();
-
-    std::cout<<"F "<<F<<"\n";
-
 
     glfwInit();
 
@@ -88,26 +80,10 @@ int main(){
         100.0f       // Far clipping plane. Keep as little as possible.
     );
     glm::mat4 MVP = projectionMatrix*ViewMatrix*ModelMatrix;
-
     glm::mat4 ModelMatrix_point = glm::mat4(0.35);
-   ModelMatrix_point[3].w = 1.0f;
-    glm::mat4 ViewMatrix_point = glm::lookAt(
-        glm::vec3(0,0,-4), 
-        glm::vec3(0,0,1),   
-        glm::vec3(0,-1,0)
-    );
-    glm::mat4 projectionMatrix_point = glm::perspective(
-        glm::radians (90.0f),         
-        (float)width/(float)height,
-        0.1f,        
-        100.0f      
-    );
-   glm::mat4 MVP_point = projectionMatrix_point*ViewMatrix_point*ModelMatrix_point;
-
-
-glm::mat4 inverseProj = inverse(projectionMatrix*ViewMatrix);
-p.x = 0;
-p.y=0;
+    ModelMatrix_point[3].w = 1.0f;
+    glm::mat4 MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
+    glm::mat4 inverseProj = inverse(projectionMatrix*ViewMatrix);
 
     if(window==nullptr){
         printf("window failed \n");
@@ -126,19 +102,16 @@ p.y=0;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
-    GLuint programID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/vertex_shader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/fragment_shader.fragmentshader" );
-    GLint uniMvp = glGetUniformLocation(programID, "MVP");
-
-     GLuint PointprogramID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/point_vertexShader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/point_fragmentShader.fragmentshader");
+    GLuint programID = LoadShaders( "vertex_shader.vertexshader", "fragment_shader.fragmentshader" );
+    GLint Mvp = glGetUniformLocation(programID, "MVP");
+    GLuint PointprogramID = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
     GLint pointMVP = glGetUniformLocation(PointprogramID, "MVP_point");
 
-
-
     float vertices [9*68];
-
     int k=0; //NOTE THIS LAYOUT IS BECAUSE OF MAYA COORD SYSTEM. set up fpr dino2.obj!
     for (int i=0; i<9*F; i+=9){
         int c1 = FV[k]-1, c2 = FV[k+1]-1, c3 = FV[k+2]-1;
+
         vertices[i+1] = V[3*c1];
         vertices[i] = V[3*c1+1];
         vertices[i+2] = V[3*c1+2];
@@ -148,6 +121,7 @@ p.y=0;
         vertices[i+7] = V[3*c3];
         vertices[i+6] = V[3*c3+1];
         vertices[i+8] = V[3*c3+2];
+
         k=k+3;
     }
 
@@ -155,7 +129,6 @@ p.y=0;
     selected_point[0]=1;
     selected_point[1]=1;
     selected_point[2]=0;
-
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
@@ -168,100 +141,85 @@ p.y=0;
     glBufferData(GL_ARRAY_BUFFER,sizeof(selected_point), &selected_point[0], GL_DYNAMIC_DRAW);
   
 
-//do{
-    while(!glfwWindowShouldClose(window))
-{
+    while(!glfwWindowShouldClose(window)){
 
+        // Clear the screen
+        glClear( GL_COLOR_BUFFER_BIT );
 
-       // Clear the screen
-       glClear( GL_COLOR_BUFFER_BIT );
-       
-       // Use our shader
+        // Use our shader
         glUseProgram(programID);
-glUniformMatrix4fv(uniMvp, 1, GL_FALSE, &MVP[0][0]);
+        glUniformMatrix4fv(Mvp, 1, GL_FALSE, &MVP[0][0]);
 
-    
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
+        glfwSetMouseButtonCallback(window, mouse_button_callback);
 
-      //  1rst attribute buffer : vertices
+        //  1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
         GLint posAttrib = glGetAttribLocation(programID, "position");
         glEnableVertexAttribArray(posAttrib);
 
-
         glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
-            3, //size of vertex information
-            GL_FLOAT, //type of the data
-            GL_FALSE, //data is normalised
-            0, //stride
-            0//offset, so where the data starts
+                            3, //size of vertex information
+                            GL_FLOAT, //type of the data
+                            GL_FALSE, //data is normalised
+                            0, //stride
+                            0//offset, so where the data starts
         );
-    
 
-for(int i=0; i<F; i++){
-          glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
-}
+        for(int i=0; i<F; i++){
+                glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
+        }
 
-glUseProgram(PointprogramID);
-//glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &pointMVP[0][0]);
+        glUseProgram(PointprogramID);
 
+        if (mouse_clicked){
+            mouse_clicked = !mouse_clicked;
+        mouse_to_world(p.x, p.y, width, height, inverseProj);
+        }
 
-if (mouse_clicked){
-    mouse_clicked = !mouse_clicked;
-   mouse_to_world(p.x, p.y, width, height, inverseProj);
-}
-
-ModelMatrix_point[0].x = p.x;
-ModelMatrix_point[1].y = p.y;
-MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
-glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
- glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
+        ModelMatrix_point[0].x = p.x;
+        ModelMatrix_point[1].y = p.y;
+        MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
+        glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
+        glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
         GLint posAttrib_p = glGetAttribLocation(PointprogramID, "position");
         glEnableVertexAttribArray(posAttrib_p);
-  glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
-            3, //size of vertex information
-            GL_FLOAT, //type of the data
-            GL_FALSE, //data is normalised
-            0, //stride
-            0//offset, so where the data starts
-        );
-    
+        glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
+                              3, //size of vertex information
+                              GL_FLOAT, //type of the data
+                              GL_FALSE, //data is normalised
+                              0, //stride
+                              0//offset, so where the data starts
+        );  
 
+        glPointSize(10.0f);
+        glDrawArrays(GL_POINTS, 0,1);
 
-glPointSize(10.0f);
-glDrawArrays(GL_POINTS, 0,1);
+        glDisableVertexAttribArray(0);
 
-
-
-            glDisableVertexAttribArray(0);
-
-      // Swap buffers
+        // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
-
     }
 
 
 
- while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-          glfwWindowShouldClose(window) == 0 );
+    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
+        glfwWindowShouldClose(window) == 0 );
 
+    //Delete to prevent memory leaks.
+    glDeleteBuffers(1, &vertexBuffer);
+    glDeleteBuffers(1, &PointBuffer);
+    glDeleteVertexArrays(1, &VertexArrayID);
+    glDeleteProgram(programID);
+    glDeleteProgram(PointprogramID);
+    //glfwDestroyCursor(cursor);
+    delete V;
+    delete N;
+    delete FN;
+    delete FV;
 
-//Delete to prevent memory leaks.
-glDeleteBuffers(1, &vertexBuffer);
-glDeleteBuffers(1, &PointBuffer);
-glDeleteVertexArrays(1, &VertexArrayID);
-glDeleteProgram(programID);
-glDeleteProgram(PointprogramID);
-//glfwDestroyCursor(cursor);
-delete V;
-delete N;
-delete FN;
-delete FV;
-
-
-  glfwTerminate();
+    glfwTerminate();
 
     return 0;
 }
