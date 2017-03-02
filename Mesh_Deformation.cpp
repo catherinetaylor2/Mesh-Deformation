@@ -3,7 +3,6 @@
 //Created by Catherine Taylor 24/02/17
 
 
-
 #include <glew.h>
 #include <glfw3.h>
 #include <cstdlib>
@@ -17,7 +16,6 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #include "shader.hpp"
 #include "readObj.hpp"
 
@@ -30,19 +28,32 @@ Point p;
 int mouse_clicked = 0;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
-    if(button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_PRESS)
+    if(button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_PRESS){
         mouse_clicked = 1;
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
-        p.x = (xpos-400.0f)/400.0f ;
-        p.y= (ypos-400.0f)/400.0f ;
+        p.x = xpos;
+        p.y= ypos;
     }
+}
 
+void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){
+
+
+float x = (float)(-2.0f*mouse_x)/width + 1, y = (float)(2.0f*mouse_y)/height - 1;
+
+    glm::vec4 V = glm::vec4(x, y, 0, 1);
+    glm::vec4 world_coords = invProj*V;
+    p.x = world_coords.x*world_coords.z/world_coords.w;
+    p.y = world_coords.y*world_coords.z/world_coords.w;
+
+
+}
 
 
 int main(){
 
-    ObjFile mesh("dino2.obj");
+    ObjFile mesh("din32.obj");
     float* V = mesh.get_vertices();
     float* N = mesh.get_normals();
     int* FV = mesh.get_faceV();
@@ -63,7 +74,7 @@ int main(){
     int width =1280, height = 720;
     GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL", nullptr, nullptr);
 
-    glm::mat4 ModelMatrix = glm::mat4(0.25);
+    glm::mat4 ModelMatrix = glm::mat4(0.35);
     ModelMatrix[3].w = 1.0;
     glm::mat4 ViewMatrix = glm::lookAt(
         glm::vec3(0,0,-4), // the position of your camera, in world space
@@ -76,9 +87,10 @@ int main(){
         0.1f,        // Near clipping plane. Keep as big as possible, or you'll get precision issues.
         100.0f       // Far clipping plane. Keep as little as possible.
     );
-glm::mat4 MVP = projectionMatrix*ViewMatrix*ModelMatrix;
+    glm::mat4 MVP = projectionMatrix*ViewMatrix*ModelMatrix;
 
-    glm::mat4 ModelMatrix_point = glm::mat4(1.0);
+    glm::mat4 ModelMatrix_point = glm::mat4(0.35);
+   ModelMatrix_point[3].w = 1.0f;
     glm::mat4 ViewMatrix_point = glm::lookAt(
         glm::vec3(0,0,-4), 
         glm::vec3(0,0,1),   
@@ -90,11 +102,12 @@ glm::mat4 MVP = projectionMatrix*ViewMatrix*ModelMatrix;
         0.1f,        
         100.0f      
     );
-glm::mat4 MVP_point = projectionMatrix_point*ViewMatrix_point*ModelMatrix_point;
+   glm::mat4 MVP_point = projectionMatrix_point*ViewMatrix_point*ModelMatrix_point;
 
 
-
-
+glm::mat4 inverseProj = inverse(projectionMatrix*ViewMatrix);
+p.x = 0;
+p.y=0;
 
     if(window==nullptr){
         printf("window failed \n");
@@ -107,11 +120,6 @@ glm::mat4 MVP_point = projectionMatrix_point*ViewMatrix_point*ModelMatrix_point;
     glewInit();
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
- //  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-  //  GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
- //  glfwSetCursor(window, cursor);
-
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     GLuint VertexArrayID;
@@ -121,6 +129,8 @@ glm::mat4 MVP_point = projectionMatrix_point*ViewMatrix_point*ModelMatrix_point;
     GLuint programID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/vertex_shader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/fragment_shader.fragmentshader" );
     GLint uniMvp = glGetUniformLocation(programID, "MVP");
 
+     GLuint PointprogramID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/point_vertexShader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/point_fragmentShader.fragmentshader");
+    GLint pointMVP = glGetUniformLocation(PointprogramID, "MVP_point");
 
 
 
@@ -170,12 +180,6 @@ glm::mat4 MVP_point = projectionMatrix_point*ViewMatrix_point*ModelMatrix_point;
         glUseProgram(programID);
 glUniformMatrix4fv(uniMvp, 1, GL_FALSE, &MVP[0][0]);
 
-//  glPointSize(10.0f);
-//  glColor3f(1.0f, 0.0f, 0.0f);
-//          glBegin(GL_POINTS);      
-//          glVertex3f(100, 100, 0.0f);
-//             glVertex3f(0, 0, 0.0f);
-//          glEnd();
     
     glfwSetMouseButtonCallback(window, mouse_button_callback);
 
@@ -199,9 +203,34 @@ for(int i=0; i<F; i++){
           glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
 }
 
+glUseProgram(PointprogramID);
+//glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &pointMVP[0][0]);
+
+
+if (mouse_clicked){
+    mouse_clicked = !mouse_clicked;
+   mouse_to_world(p.x, p.y, width, height, inverseProj);
+}
+
+ModelMatrix_point[0].x = p.x;
+ModelMatrix_point[1].y = p.y;
+MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
+glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
+ glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
+        GLint posAttrib_p = glGetAttribLocation(PointprogramID, "position");
+        glEnableVertexAttribArray(posAttrib_p);
+  glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
+            3, //size of vertex information
+            GL_FLOAT, //type of the data
+            GL_FALSE, //data is normalised
+            0, //stride
+            0//offset, so where the data starts
+        );
+    
+
+
 glPointSize(10.0f);
-// glColor3f(1.0f, 0.0f, 0.0f);
-glDrawArrays(GL_POINTS, 612,1);
+glDrawArrays(GL_POINTS, 0,1);
 
 
 
@@ -224,6 +253,7 @@ glDeleteBuffers(1, &vertexBuffer);
 glDeleteBuffers(1, &PointBuffer);
 glDeleteVertexArrays(1, &VertexArrayID);
 glDeleteProgram(programID);
+glDeleteProgram(PointprogramID);
 //glfwDestroyCursor(cursor);
 delete V;
 delete N;
