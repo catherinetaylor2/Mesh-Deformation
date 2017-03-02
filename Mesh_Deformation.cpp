@@ -13,51 +13,30 @@
 #include <string>
 #include <cstdio>
 #include <iostream>
-#include <math.h>
-#include <stdio.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "shader.hpp"
 #include "readObj.hpp"
 
 struct Point {
-
 	GLfloat x;
-
 	GLfloat y;
-
 };
 
-
-
 Point p;
+int mouse_clicked = 0;
 
-
-
-void DrawPoint(float x_val, float y_val){
-     glPointSize(10.0f);
-         glBegin(GL_POINTS);      
-         glVertex3f(x_val, y_val, 0.0f);
-         glEnd();
-
-}
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
     if(button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_PRESS)
-        std::cout<<"button pressed \n";
-             double xpos, ypos;
-     glfwGetCursorPos(window, &xpos, &ypos);
-     std::cout<<"x "<<xpos<<"\n";
-std::cout<< (xpos-400.0f)/400.0f << " " << (ypos-400.0f)/400.0f << "\n";
-
-// glLoadIdentity();
-//    glClear(GL_COLOR_BUFFER_BIT);
-//          glColor3f(1.0f, 0.0f, 0.0f);
-//          glPointSize(10.0f);
-//          glBegin(GL_POINTS);
-//        //  glVertex3f((xpos-400.0f)/400.0f, (ypos-400.0f)/400.0f, 0.0f);
-//          glVertex3f(1, 1, 0.0f);
-//          glEnd();
-p.x = (xpos-400.0f)/400.0f ;
-p.y= (ypos-400.0f)/400.0f ;
-}
+        mouse_clicked = 1;
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        p.x = (xpos-400.0f)/400.0f ;
+        p.y= (ypos-400.0f)/400.0f ;
+    }
 
 
 
@@ -81,18 +60,41 @@ int main(){
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
+    int width =1280, height = 720;
+    GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL", nullptr, nullptr);
 
-    GLFWwindow* window = glfwCreateWindow(800, 800, "OpenGL", nullptr, nullptr);
+    glm::mat4 ModelMatrix = glm::mat4(0.25);
+    ModelMatrix[3].w = 1.0;
+    glm::mat4 ViewMatrix = glm::lookAt(
+        glm::vec3(0,0,-4), // the position of your camera, in world space
+        glm::vec3(0,0,1),   // where you want to look at, in world space
+        glm::vec3(0,-1,0)        // probably glm::vec3(0,1,0), but (0,-1,0) would make you looking upside-down, which can be great too
+    );
+    glm::mat4 projectionMatrix = glm::perspective(
+        glm::radians (90.0f),         // The horizontal Field of View, in degrees : the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+        (float)width/(float)height, // Aspect Ratio. Depends on the size of your window. Notice that 4/3 == 800/600 == 1280/960, sounds familiar ?
+        0.1f,        // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+        100.0f       // Far clipping plane. Keep as little as possible.
+    );
+glm::mat4 MVP = projectionMatrix*ViewMatrix*ModelMatrix;
+
+    glm::mat4 ModelMatrix_point = glm::mat4(1.0);
+    glm::mat4 ViewMatrix_point = glm::lookAt(
+        glm::vec3(0,0,-4), 
+        glm::vec3(0,0,1),   
+        glm::vec3(0,-1,0)
+    );
+    glm::mat4 projectionMatrix_point = glm::perspective(
+        glm::radians (90.0f),         
+        (float)width/(float)height,
+        0.1f,        
+        100.0f      
+    );
+glm::mat4 MVP_point = projectionMatrix_point*ViewMatrix_point*ModelMatrix_point;
 
 
-glViewport(0,0,800,800);
-glMatrixMode(GL_PROJECTION);
-glLoadIdentity();
-glOrtho(0.0, 800.0, 0.0, 800.0, 1.0, -1.0);
-glMatrixMode(GL_MODELVIEW);
-glLoadIdentity();
 
-//     DrawPoint(1, 1);
+
 
     if(window==nullptr){
         printf("window failed \n");
@@ -117,42 +119,56 @@ glLoadIdentity();
     glBindVertexArray(VertexArrayID);
 
     GLuint programID = LoadShaders( "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/vertex_shader.vertexshader", "/Users/catta/OneDrive/Documents/Course work/Computer animation and games 2/Mesh-Deformation/fragment_shader.fragmentshader" );
-
-float vertices [9*68];
-
-int k=0; //NOTE THIS LAYOUT IS BECAUSE OF MAYA COORD SYSTEM. set up fpr dino2.obj!
-for (int i=0; i<9*F; i+=9){
-    int c1 = FV[k]-1, c2 = FV[k+1]-1, c3 = FV[k+2]-1;
-    vertices[i+1] = -0.07*V[3*c1];
-    vertices[i] = 0.07*V[3*c1+1];
-    vertices[i+2] = 0.07*V[3*c1+2];
-    vertices[i+4] = -0.07*V[3*c2];
-    vertices[i+3] = 0.07*V[3*c2+1];
-    vertices[i+5] = 0.07*V[3*c2+2];
-    vertices[i+7] = -0.07*V[3*c3];
-    vertices[i+6] = 0.07*V[3*c3+1];
-    vertices[i+8] = 0.07*V[3*c3+2];
-    k=k+3;
-}
-
-
-GLuint vertexBuffer;
-glGenBuffers(1, &vertexBuffer);
-glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
+    GLint uniMvp = glGetUniformLocation(programID, "MVP");
 
 
 
-glfwSetMouseButtonCallback(window, mouse_button_callback);
+
+    float vertices [9*68];
+
+    int k=0; //NOTE THIS LAYOUT IS BECAUSE OF MAYA COORD SYSTEM. set up fpr dino2.obj!
+    for (int i=0; i<9*F; i+=9){
+        int c1 = FV[k]-1, c2 = FV[k+1]-1, c3 = FV[k+2]-1;
+        vertices[i+1] = V[3*c1];
+        vertices[i] = V[3*c1+1];
+        vertices[i+2] = V[3*c1+2];
+        vertices[i+4] = V[3*c2];
+        vertices[i+3] = V[3*c2+1];
+        vertices[i+5] = V[3*c2+2];
+        vertices[i+7] = V[3*c3];
+        vertices[i+6] = V[3*c3+1];
+        vertices[i+8] = V[3*c3+2];
+        k=k+3;
+    }
+
+    float selected_point [3];
+    selected_point[0]=1;
+    selected_point[1]=1;
+    selected_point[2]=0;
 
 
+    GLuint vertexBuffer;
+    glGenBuffers(1, &vertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), &vertices[0], GL_DYNAMIC_DRAW);
 
-do{
+    GLuint PointBuffer;
+    glGenBuffers(1, &PointBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(selected_point), &selected_point[0], GL_DYNAMIC_DRAW);
+  
+
+//do{
+    while(!glfwWindowShouldClose(window))
+{
+
+
        // Clear the screen
        glClear( GL_COLOR_BUFFER_BIT );
        
        // Use our shader
         glUseProgram(programID);
+glUniformMatrix4fv(uniMvp, 1, GL_FALSE, &MVP[0][0]);
 
 //  glPointSize(10.0f);
 //  glColor3f(1.0f, 0.0f, 0.0f);
@@ -160,6 +176,8 @@ do{
 //          glVertex3f(100, 100, 0.0f);
 //             glVertex3f(0, 0, 0.0f);
 //          glEnd();
+    
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
       //  1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
@@ -168,21 +186,22 @@ do{
         glEnableVertexAttribArray(posAttrib);
 
 
-	    glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
-							3, //size of vertex information
-								GL_FLOAT, //type of the data
-								GL_FALSE, //data is normalised
-							0, //stride
-								0//offset, so where the data starts
-		);
+        glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
+            3, //size of vertex information
+            GL_FLOAT, //type of the data
+            GL_FALSE, //data is normalised
+            0, //stride
+            0//offset, so where the data starts
+        );
     
 
 for(int i=0; i<F; i++){
           glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
 }
-// glPointSize(10.0f);
+
+glPointSize(10.0f);
 // glColor3f(1.0f, 0.0f, 0.0f);
-// glDrawArrays(GL_POINTS, 0,1);
+glDrawArrays(GL_POINTS, 612,1);
 
 
 
@@ -202,6 +221,7 @@ for(int i=0; i<F; i++){
 
 //Delete to prevent memory leaks.
 glDeleteBuffers(1, &vertexBuffer);
+glDeleteBuffers(1, &PointBuffer);
 glDeleteVertexArrays(1, &VertexArrayID);
 glDeleteProgram(programID);
 //glfwDestroyCursor(cursor);
