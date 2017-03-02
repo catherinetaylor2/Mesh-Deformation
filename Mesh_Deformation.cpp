@@ -14,8 +14,6 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "shader.hpp"
 #include "readObj.hpp"
 
@@ -26,10 +24,12 @@ struct Point {
 
 Point p;
 int mouse_clicked = 0;
+int number_of_clicks = 0;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
     if(button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_PRESS){
         mouse_clicked = 1;
+        number_of_clicks++;
         double xpos, ypos;
         glfwGetCursorPos(window, &xpos, &ypos);
         p.x = xpos;
@@ -38,7 +38,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){
-    float x = (float)(-2.0f*mouse_x)/width + 1, y = (float)(2.0f*mouse_y)/height - 1;
+    float x = (float)(-2.0f*mouse_x)/(float)width + 1, y = (float)(2.0f*mouse_y)/(float)height - 1;
     glm::vec4 V = glm::vec4(x, y, 0, 1);
     glm::vec4 world_coords = invProj*V;
     p.x = world_coords.x*world_coords.z/world_coords.w;
@@ -125,10 +125,11 @@ int main(){
         k=k+3;
     }
 
-    float selected_point [3];
-    selected_point[0]=1;
-    selected_point[1]=1;
-    selected_point[2]=0;
+    float selected_point [9] ={
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f
+    };
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
@@ -194,6 +195,10 @@ int main(){
 
         glPointSize(10.0f);
         glDrawArrays(GL_POINTS, 0,1);
+
+        if (number_of_clicks==3){
+            number_of_clicks = 0;
+        }
 
         glDisableVertexAttribArray(0);
 
