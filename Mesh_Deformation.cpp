@@ -17,6 +17,8 @@
 #include "shader.hpp"
 #include "readObj.hpp"
 
+#define infinity 100000000
+
 struct Point {
 	GLfloat x;
 	GLfloat y;
@@ -44,6 +46,24 @@ void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::
     glm::vec4 world_coords = invProj*V;
     p.x = world_coords.x*world_coords.z/world_coords.w;
     p.y = world_coords.y*world_coords.z/world_coords.w;
+}
+
+void find_closest_vertex(float x_coord, float y_coord, float * vertices, int number_of_faces){
+    float min_distance = infinity, d= infinity;
+    int min_index = 0;
+    std::cout<<"px "<<p.x<<" "<<"py"<< p.y<<"\n";
+    for(int i=0; i<number_of_faces; i++){
+        float x = vertices[3*i], y = vertices[3*i+1];
+        d = sqrt((x_coord/0.35 - x)*(x_coord/0.35 - x)+(y_coord/0.35 - y)*(y_coord/0.35 -y));
+        if (d<min_distance){
+            min_distance = d;
+            min_index = 3*i;
+        }
+    }
+p.x = vertices[min_index];
+std::cout<<"p "<<p.x<< " "<<p.y<<"\n";
+p.y = vertices[min_index+1];
+
 }
 
 
@@ -187,15 +207,15 @@ int main(){
         if (mouse_clicked){
             mouse_clicked = !mouse_clicked;
             mouse_to_world(p.x, p.y, width, height, inverseProj);
+            find_closest_vertex(p.x, p.y, vertices, F);
             mouse_world[2*(number_of_clicks-1)] = p.x;
             mouse_world[2*(number_of_clicks-1)+1] = p.y;
-
-            std::cout<<"mw "<<mouse_world[0]<<" "<<mouse_world[1]<<" "<<mouse_world[2]<<" "<<mouse_world[3]<<  "\n";
         }
+       // std::cout<<"px "<<p.x<<"\n";
  
         for (int i=0; i<3; i++){
-            ModelMatrix_point[0].x = mouse_world[2*i];
-            ModelMatrix_point[1].y = mouse_world[2*i+1];
+            ModelMatrix_point[0].x = 0.35*mouse_world[2*i];
+            ModelMatrix_point[1].y = 0.35*mouse_world[2*i+1];
             MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
             glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
         
