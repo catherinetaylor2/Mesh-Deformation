@@ -74,7 +74,8 @@ int main(){
     float* N = mesh.get_normals();
     int* FV = mesh.get_faceV();
     int* FN = mesh.get_faceN();
-    int F = mesh.get_number_of_faces();
+  int F = mesh.get_number_of_faces();
+
 
     glfwInit();
 
@@ -128,39 +129,63 @@ int main(){
     GLuint PointprogramID = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
     GLint pointMVP = glGetUniformLocation(PointprogramID, "MVP_point");
 
-    float vertices [9*68];
-    int k=0; //NOTE THIS LAYOUT IS BECAUSE OF MAYA COORD SYSTEM. set up fpr dino2.obj!
-    for (int i=0; i<9*F; i+=9){
-        int c1 = FV[k]-1, c2 = FV[k+1]-1, c3 = FV[k+2]-1;
+    // float vertices [9*68];
+    // int k=0; //NOTE THIS LAYOUT IS BECAUSE OF MAYA COORD SYSTEM. set up fpr dino2.obj!
+    // for (int i=0; i<9*F; i+=9){
+    //     int c1 = FV[k]-1, c2 = FV[k+1]-1, c3 = FV[k+2]-1;
 
-        vertices[i+1] = V[3*c1];
-        vertices[i] = V[3*c1+1];
-        vertices[i+2] = V[3*c1+2];
-        vertices[i+4] = V[3*c2];
-        vertices[i+3] = V[3*c2+1];
-        vertices[i+5] = V[3*c2+2];
-        vertices[i+7] = V[3*c3];
-        vertices[i+6] = V[3*c3+1];
-        vertices[i+8] = V[3*c3+2];
+    //     vertices[i+1] = V[3*c1];
+    //     vertices[i] = V[3*c1+1];
+    //     vertices[i+2] = V[3*c1+2];
+    //     vertices[i+4] = V[3*c2];
+    //     vertices[i+3] = V[3*c2+1];
+    //     vertices[i+5] = V[3*c2+2];
+    //     vertices[i+7] = V[3*c3];
+    //     vertices[i+6] = V[3*c3+1];
+    //     vertices[i+8] = V[3*c3+2];
 
-        k=k+3;
+    //     k=k+3;
+    // }
+
+     float vertices [3*66];
+    for(int i=0; i<3*66;i+=3){
+        vertices[i+1]=V[i];
+        vertices[i]=V[i+1];
+        vertices[i+2]=V[i+2];
     }
 
-    float selected_point [9] ={
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f
-    };
+    unsigned int indices [3*68] ;
+
+    for(int i=0; i<3*F; i+=3){
+        indices[i]=FV[i]-1;
+        indices[i+1]=FV[i+1]-1;
+        indices[i+2]=FV[i+2]-1;   
+    }
 
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), &vertices[0], GL_DYNAMIC_DRAW);
 
-    GLuint PointBuffer;
-    glGenBuffers(1, &PointBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(selected_point), &selected_point[0], GL_DYNAMIC_DRAW);
+
+
+ GLuint IBO;
+
+    glGenBuffers(1, &IBO);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
+
+
+//     float selected_point [9] ={
+//         1.0f, 1.0f, 0.0f,
+//         1.0f, 1.0f, 0.0f,
+//         1.0f, 1.0f, 0.0f
+//     };
+
+//     GLuint PointBuffer;
+//     glGenBuffers(1, &PointBuffer);
+//    glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
+//     glBufferData(GL_ARRAY_BUFFER,sizeof(selected_point), &selected_point[0], GL_DYNAMIC_DRAW);
   
 
     while(!glfwWindowShouldClose(window)){
@@ -175,8 +200,10 @@ int main(){
         glfwSetMouseButtonCallback(window, mouse_button_callback);
 
         //  1rst attribute buffer : vertices
+              glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
         GLint posAttrib = glGetAttribLocation(programID, "position");
         glEnableVertexAttribArray(posAttrib);
 
@@ -188,43 +215,44 @@ int main(){
                             0//offset, so where the data starts
         );
 
-        for(int i=0; i<F; i++){
-                glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
-        }
+        // for(int i=0; i<F; i++){
+        //         glDrawArrays(GL_LINE_LOOP, 3*i, 3); // 3 indices starting at 0 -> 1 triangle
+        // }
+glDrawElements(GL_TRIANGLES, 3*68,  GL_UNSIGNED_INT,0);
 
-        glUseProgram(PointprogramID);
-        glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
-        GLint posAttrib_p = glGetAttribLocation(PointprogramID, "position");
-        glEnableVertexAttribArray(posAttrib_p);
-        glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
-                              3, //size of vertex information
-                              GL_FLOAT, //type of the data
-                              GL_FALSE, //data is normalised
-                              0, //stride
-                              0//offset, so where the data starts
-        );  
+    //     glUseProgram(PointprogramID);
+    //     glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
+    //     GLint posAttrib_p = glGetAttribLocation(PointprogramID, "position");
+    //     glEnableVertexAttribArray(posAttrib_p);
+    //     glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
+    //                           3, //size of vertex information
+    //                           GL_FLOAT, //type of the data
+    //                           GL_FALSE, //data is normalised
+    //                           0, //stride
+    //                           0//offset, so where the data starts
+    //     );  
 
-        if (mouse_clicked){
-            mouse_clicked = !mouse_clicked;
-            mouse_to_world(p.x, p.y, width, height, inverseProj);
-            find_closest_vertex(p.x, p.y, vertices, F);
-            mouse_world[2*(number_of_clicks-1)] = p.x;
-            mouse_world[2*(number_of_clicks-1)+1] = p.y;
-        }
-       // std::cout<<"px "<<p.x<<"\n";
+    //     if (mouse_clicked){
+    //         mouse_clicked = !mouse_clicked;
+    //         mouse_to_world(p.x, p.y, width, height, inverseProj);
+    //         find_closest_vertex(p.x, p.y, vertices, F);
+    //         mouse_world[2*(number_of_clicks-1)] = p.x;
+    //         mouse_world[2*(number_of_clicks-1)+1] = p.y;
+    //     }
+    //    // std::cout<<"px "<<p.x<<"\n";
  
-        for (int i=0; i<3; i++){
-            ModelMatrix_point[0].x = 0.35*mouse_world[2*i];
-            ModelMatrix_point[1].y = 0.35*mouse_world[2*i+1];
-            MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
-            glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
+    //     for (int i=0; i<3; i++){
+    //         ModelMatrix_point[0].x = 0.35*mouse_world[2*i];
+    //         ModelMatrix_point[1].y = 0.35*mouse_world[2*i+1];
+    //         MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
+    //         glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
         
-            glPointSize(10.0f);
-            glDrawArrays(GL_POINTS, 0,1);
-        }
-        if (number_of_clicks==3){
-            number_of_clicks = 0;
-        }
+    //         glPointSize(10.0f);
+    //         glDrawArrays(GL_POINTS, 0,1);
+    //     }
+    //     if (number_of_clicks==3){
+    //         number_of_clicks = 0;
+    //     }
 
         glDisableVertexAttribArray(0);
 
@@ -240,10 +268,12 @@ int main(){
 
     //Delete to prevent memory leaks.
     glDeleteBuffers(1, &vertexBuffer);
-    glDeleteBuffers(1, &PointBuffer);
+   // glDeleteBuffers(1, &PointBuffer);
+    glDeleteBuffers(1, &IBO);
+    
     glDeleteVertexArrays(1, &VertexArrayID);
     glDeleteProgram(programID);
-    glDeleteProgram(PointprogramID);
+   // glDeleteProgram(PointprogramID);
     //glfwDestroyCursor(cursor);
     delete V;
     delete N;
