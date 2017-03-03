@@ -25,6 +25,7 @@ struct Point {
 Point p;
 int mouse_clicked = 0;
 int number_of_clicks = 0;
+GLfloat mouse_world [6] = {0,0,0,0,0,0};
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
     if(button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_PRESS){
@@ -172,16 +173,6 @@ int main(){
         }
 
         glUseProgram(PointprogramID);
-
-        if (mouse_clicked){
-            mouse_clicked = !mouse_clicked;
-        mouse_to_world(p.x, p.y, width, height, inverseProj);
-        }
-
-        ModelMatrix_point[0].x = p.x;
-        ModelMatrix_point[1].y = p.y;
-        MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
-        glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
         glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
         GLint posAttrib_p = glGetAttribLocation(PointprogramID, "position");
         glEnableVertexAttribArray(posAttrib_p);
@@ -193,9 +184,24 @@ int main(){
                               0//offset, so where the data starts
         );  
 
-        glPointSize(10.0f);
-        glDrawArrays(GL_POINTS, 0,1);
+        if (mouse_clicked){
+            mouse_clicked = !mouse_clicked;
+            mouse_to_world(p.x, p.y, width, height, inverseProj);
+            mouse_world[2*(number_of_clicks-1)] = p.x;
+            mouse_world[2*(number_of_clicks-1)+1] = p.y;
 
+            std::cout<<"mw "<<mouse_world[0]<<" "<<mouse_world[1]<<" "<<mouse_world[2]<<" "<<mouse_world[3]<<  "\n";
+        }
+ 
+        for (int i=0; i<3; i++){
+            ModelMatrix_point[0].x = mouse_world[2*i];
+            ModelMatrix_point[1].y = mouse_world[2*i+1];
+            MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
+            glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);
+        
+            glPointSize(10.0f);
+            glDrawArrays(GL_POINTS, 0,1);
+        }
         if (number_of_clicks==3){
             number_of_clicks = 0;
         }
