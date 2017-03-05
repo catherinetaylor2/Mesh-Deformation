@@ -190,6 +190,8 @@ int main(){
 //-------------------------------------------------------------------------------------------------------------------------------------------
 //ALGORITHM
 
+int w=1000;
+
 float b1[6*68+6], A1[6*68+6][2*66];
 for(int i=0; i<6*68; i++){
     b1[i]=0;
@@ -258,7 +260,7 @@ int edges [2][8] ={ {-1,0,1,0,0,0,0,0},{0,-1,0,1,0,0,0,0}};
             mouse_world[2*(number_of_clicks-1)+1] = p.y;            
         }
         if (right_click==1){
-            mouse_to_world_goal(p_goal.x, p_goal.y, width, height, inverseProj);
+            mouse_to_world_goal(p_goal.x, p_goal.y, width, height, inverseProj); //maybe need to divide by 0.35; 
             right_click = 0;
         }
         for (int i=0; i<3; i++){
@@ -273,7 +275,7 @@ int edges [2][8] ={ {-1,0,1,0,0,0,0,0},{0,-1,0,1,0,0,0,0}};
         glUseProgram(GoalPointprogramID);
         glBindBuffer(GL_ARRAY_BUFFER, GoalPointBuffer);
         GLint posAttrib_g = glGetAttribLocation(GoalPointprogramID, "position");
-        glEnableVertexAttribArray(posAttrib_g);
+        glEnableVertexAttribArray(posAttrib_g); 
         glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
                               3, //size of vertex information
                               GL_FLOAT, //type of the data
@@ -292,6 +294,56 @@ int edges [2][8] ={ {-1,0,1,0,0,0,0,0},{0,-1,0,1,0,0,0,0}};
         if (number_of_clicks==3){
             number_of_clicks = 0;
         }
+
+//---------------------------------------------------------------------------------------------------------------
+//ALGORITHM
+int vi, vj, vl, vr = 0;
+float ex, ey, M[4][4], GT[4][8], GTG_array[4][4], Gk[4][8], H[2][8];
+glm::mat4 GTG;
+b1[6*F] = w*p_goal.x;
+b1[6*F+1] = w*p_goal.y;
+for (int i=0; i<4; i++){
+    b1[6*F+2+i] = w*mouse_world[i];
+}
+for(int i =0; i<F; i++){
+    for(int j=0; j<3;j++){
+        vi = FV[3*i + j];
+        vj = FV[3*i + j%2 + 1];
+        vl = FV[3*i + 2*(j==0)+(j-1)];
+        ex = vertices[3*vj ] - vertices[3*vi];
+        ey = vertices[3*vj+1] - vertices[3*vi+1];
+        glm::mat2 E;
+        E[0][0]=ex;
+        E[1][0]= ey;
+        E[0][1] = -ey;
+        E[1][1]=ex;
+        
+
+        for (int k=0; k<F; k++){
+            if (((vi == FV[3*k])|(vi == FV[3*k+1])|(vi==FV[3*k+2]))&((vj == FV[3*k])|(vj == FV[3*k+1])|(vj == FV[3*k+2]))&(vl !=FV[3*k])&(vl!=FV[3*k+1])&(vl!=FV[3*k+2])){
+                vr = (vi!=FV[3*k])*(vj!=FV[3*k])*FV[3*k] + (vi!=FV[3*k + 1])*(vj!=FV[3*k+1])*FV[3*k+1]+(vi!=FV[3*k + 2])*(vj!=FV[3*k+2])*FV[3*k+2];
+             }
+            if (vr!=0){
+                float G[8][4] = {{vertices[3*vi], vertices[3*vi+1], 1, 0}, {vertices[3*vi + 1], -vertices[3*vi], 0,1},{vertices[3*vj], vertices[3*vj+1], 1, 0}, {vertices[3*vj + 1], -vertices[3*vj], 0,1}, {vertices[3*vl], vertices[3*vl+1], 1, 0}, {vertices[3*vl + 1], -vertices[3*vl], 0,1}, {vertices[3*vr], vertices[3*vr+1], 1, 0}, {vertices[3*vr + 1], -vertices[3*vr], 0,1}};
+                matrix_transpose(G, 8, 4, GT);
+                matrix_multiply_8(GT, G, 4, 8, 8, 4, M);
+                array_to_matrix(GTG, M);
+                glm::mat4 GTG_inverse = inverse(GTG);
+                matrix_to_array(GTG_inverse, GTG_array);
+                matrix_multiply_4(GTG_array, GT, 4,4,4,8,Gk);
+
+            }
+            else if(vr==0){
+                float G[6][4] = {{vertices[3*vi], vertices[3*vi+1], 1, 0}, {vertices[3*vi + 1], -vertices[3*vi], 0,1},{vertices[3*vj], vertices[3*vj+1], 1, 0}, {vertices[3*vj + 1], -vertices[3*vj], 0,1}, {vertices[3*vl], vertices[3*vl+1], 1, 0}, {vertices[3*vl + 1], -vertices[3*vl], 0,1}};
+
+            }
+        }
+    }
+}
+
+
+
+//----------------------------------------------------------------------------------------------------------------
 
         glDisableVertexAttribArray(0);
         // Swap buffers
