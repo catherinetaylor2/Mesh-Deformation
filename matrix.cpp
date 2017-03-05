@@ -23,7 +23,24 @@ void matrix_multiply_8(float a[][8], float b[][4], int r1, int c1, int r2, int c
         }
     }
 }
-
+void matrix_multiply_86(float a[][6], float b[][4], int r1, int c1, int r2, int c2, float M[][4]){
+  if(c1!=r2){
+        std::cout<<"These matrices cannot be multiplied \n";
+        return;
+    }
+    for (int i=0; i<r1; i++){
+        for (int j=0; j<c2;j++){
+            M[i][j]=0;
+        }
+    }
+    for(int i = 0; i < r1; ++i){
+        for(int j = 0; j < c2; ++j){
+            for(int k = 0; k < c1; ++k){
+                M[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+}
 void matrix_multiply_4(float a[][4], float b[][8], int r1, int c1, int r2, int c2, float M[][8]){
     if(c1!=r2){
         std::cout<<"These matrices cannot be multiplied \n";
@@ -42,8 +59,34 @@ void matrix_multiply_4(float a[][4], float b[][8], int r1, int c1, int r2, int c
         }
     }
 }
+void matrix_multiply_46(float a[][4], float b[][6], int r1, int c1, int r2, int c2, float M[][6]){
+    if(c1!=r2){
+        std::cout<<"These matrices cannot be multiplied \n";
+        return;
+    }
+    for (int i=0; i<r1; i++){
+        for (int j=0; j<c2;j++){
+            M[i][j]=0;
+        }
+    }
+    for(int i = 0; i < r1; ++i){
+        for(int j = 0; j < c2; ++j){
+            for(int k = 0; k < c1; ++k){
+                M[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }  
+}
 
-void matrix_transpose(float a[][4], int r, int c, float at[][8]){
+
+void matrix_transpose_8(float a[][4], int r, int c, float at[][8]){
+    for (int i=0; i<c; i++){
+        for (int j=0; j<r;j++){
+            at[i][j]=a[j][i];
+        }
+    }
+}
+void matrix_transpose_6(float a[][4], int r, int c, float at[][6]){
     for (int i=0; i<c; i++){
         for (int j=0; j<r;j++){
             at[i][j]=a[j][i];

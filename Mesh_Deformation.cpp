@@ -199,7 +199,8 @@ for(int i=0; i<6*68; i++){
         A1[i][j]=0;
     }
 }
-int edges [2][8] ={ {-1,0,1,0,0,0,0,0},{0,-1,0,1,0,0,0,0}};
+float edges [2][8] ={ {-1,0,1,0,0,0,0,0},{0,-1,0,1,0,0,0,0}};
+float edges2 [2][6] = { {-1,0,1,0,0,0},{0,-1,0,1,0,0}};
 
 
 
@@ -296,10 +297,12 @@ int edges [2][8] ={ {-1,0,1,0,0,0,0,0},{0,-1,0,1,0,0,0,0}};
         }
 
 //---------------------------------------------------------------------------------------------------------------
-//ALGORITHM
+//ALGORITHM - STEP 1:
 int vi, vj, vl, vr = 0;
-float ex, ey, M[4][4], GT[4][8], GTG_array[4][4], Gk[4][8], H[2][8];
+float ex, ey, M[4][4], GT[4][8], GTG_array[4][4], Gk[4][8],  Gk2[2][8];
+float GT_6[4][6], GTG_array_6[4][4], Gk_6[4][6], Gk2_6[2][6], M_6[4][4];
 glm::mat4 GTG;
+glm::mat4 GTG_6;
 b1[6*F] = w*p_goal.x;
 b1[6*F+1] = w*p_goal.y;
 for (int i=0; i<4; i++){
@@ -325,16 +328,26 @@ for(int i =0; i<F; i++){
              }
             if (vr!=0){
                 float G[8][4] = {{vertices[3*vi], vertices[3*vi+1], 1, 0}, {vertices[3*vi + 1], -vertices[3*vi], 0,1},{vertices[3*vj], vertices[3*vj+1], 1, 0}, {vertices[3*vj + 1], -vertices[3*vj], 0,1}, {vertices[3*vl], vertices[3*vl+1], 1, 0}, {vertices[3*vl + 1], -vertices[3*vl], 0,1}, {vertices[3*vr], vertices[3*vr+1], 1, 0}, {vertices[3*vr + 1], -vertices[3*vr], 0,1}};
-                matrix_transpose(G, 8, 4, GT);
+                matrix_transpose_8(G, 8, 4, GT);
                 matrix_multiply_8(GT, G, 4, 8, 8, 4, M);
                 array_to_matrix(GTG, M);
                 glm::mat4 GTG_inverse = inverse(GTG);
                 matrix_to_array(GTG_inverse, GTG_array);
                 matrix_multiply_4(GTG_array, GT, 4,4,4,8,Gk);
+                get_top_rows_8(Gk, Gk2);
+                float  H = edges - Gk2;
 
             }
             else if(vr==0){
                 float G[6][4] = {{vertices[3*vi], vertices[3*vi+1], 1, 0}, {vertices[3*vi + 1], -vertices[3*vi], 0,1},{vertices[3*vj], vertices[3*vj+1], 1, 0}, {vertices[3*vj + 1], -vertices[3*vj], 0,1}, {vertices[3*vl], vertices[3*vl+1], 1, 0}, {vertices[3*vl + 1], -vertices[3*vl], 0,1}};
+                matrix_transpose_6(G, 6, 4, GT_6);
+                matrix_multiply_86(GT_6, G, 4, 6, 6, 4, M_6);
+                 array_to_matrix(GTG_6, M);
+                glm::mat4 GTG_inverse6 = inverse(GTG_6);
+                matrix_to_array(GTG_inverse6, GTG_array_6);
+                matrix_multiply_46(GTG_array_6, GT_6, 4,4,4,6,Gk_6);
+                get_top_rows_6(Gk_6, Gk2_6);
+                float  H_6 = edges2 - Gk2_6;
 
             }
         }
