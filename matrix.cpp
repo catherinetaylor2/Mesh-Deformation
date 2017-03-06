@@ -83,6 +83,7 @@ void matrix_transpose_8(float a[][4], int r, int c, float at[][8]){
     for (int i=0; i<c; i++){
         for (int j=0; j<r;j++){
             at[i][j]=a[j][i];
+               //   std::cout<<"a vals "<<at[i][j]<<"\n";
         }
     }
 }
@@ -97,6 +98,7 @@ void matrix_transpose_6(float a[][4], int r, int c, float at[][6]){
 void array_to_matrix(glm::mat4 matrix, float a[][4]){
     for (int x = 0; x< 4;x++){
         for (int y=0; y<4;y++){
+      
             matrix[y][x] = a[x][y];
         }
     }
