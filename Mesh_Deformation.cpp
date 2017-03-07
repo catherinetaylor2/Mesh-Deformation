@@ -316,7 +316,7 @@ b2y(3*F+1) = w*p_goal.y/0.35;
 for (int i=0; i<3; i++){
     A1(6*F + 2*i, 2*vertex_pos[i]) = w;
     A1(6*F + 2*i+1, 2*vertex_pos[i]+1)=w;
- A2(3*F+i,vertex_pos[i] )=w;
+    A2(3*F+i,vertex_pos[i] )=w;
 }
 for (int i=1; i<5;i++){
   b1(6*F+1+i) = w*mouse_world[i+1];
@@ -415,6 +415,8 @@ for(int i =0; i<F; i++){
         E(1,0)= ey;
         E(0,1) = ey;
         E(1,1)=-ex;
+
+       
         
      for (int k=0; k<F; k++){
             if (((vi == FV[3*k]-1)|(vi == FV[3*k+1]-1)|(vi==FV[3*k+2]-1))&((vj == FV[3*k]-1)|(vj == FV[3*k+1]-1)|(vj == FV[3*k+2]-1))&(vl !=FV[3*k]-1)&(vl!=FV[3*k+1]-1)&(vl!=FV[3*k+2]-1)){
@@ -422,7 +424,7 @@ for(int i =0; i<F; i++){
 
             }
         }
-      
+       
         if (vr<1000){
            
             G<< vertices[3*vi], vertices[3*vi+1], 1, 0,
@@ -435,6 +437,7 @@ for(int i =0; i<F; i++){
                 vertices[3*vr + 1], -vertices[3*vr], 0,1;
             v<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1), vertex_new(2*vr), vertex_new(2*vr+1) ; 
             t = (((G.transpose()*G).inverse()*G.transpose()).block<2,8>(0,0))*v;
+            std::cout<<"t "<<t(0,0)<<" " <<t(1,0)<<"\n";
             vr =1000;
         
     }
@@ -448,15 +451,15 @@ for(int i =0; i<F; i++){
              v_no_vr<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1); 
             t = (((G_no_vr.transpose()*G_no_vr).inverse()*G_no_vr.transpose()).block<2,6>(0,0))*v_no_vr;
         }
-        // T<< t(0,0), t(1,0),
-        //    -t(1,0), t(0,0);
-        //    b = T.normalized();
-        //    b2x(3*i +j) = b(0,0);
-        //    b2x(3*i +j) = b(1,0);
+        T<< t(0,0), t(1,0),
+           -t(1,0), t(0,0);
+           b = T.normalized();
+           b2x(3*i +j) = b(0,0);
+           b2x(3*i +j) = b(1,0);
                }
 }
-// V2x = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2x;
-// V2y = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2y;
+V2x = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2x;
+V2y = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2y;
 
 for (int i=0; i<66; i++){
     V2[3*i] = vertex_new(2*i,0);
