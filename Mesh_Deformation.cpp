@@ -79,7 +79,7 @@ void find_closest_vertex(float x_coord, float y_coord, float * vertices){
     p.x = vertices[min_index];
     p.y = vertices[min_index+1];
     vertex_pos[number_of_clicks-1]= min_index/3;
-}
+    }
 
 int main(){
 
@@ -164,7 +164,7 @@ int main(){
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), &vertices[0], GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), &vertices[0], GL_STREAM_DRAW);
 
     GLuint IBO;
     glGenBuffers(1, &IBO);
@@ -195,16 +195,27 @@ int main(){
 
 int w=1000;
 
-Eigen::MatrixXf b1(6*F+6,1),  A1(6*68+6, 2*66), edges(2,8), edges_no_vr(2,6), vertex_new(2*66, 1), A2(3*F+3, 66), b2x (3*F + 3,1), b2y(3*F + 3,1), V2x(66,1), V2y(66,1);
+Eigen::MatrixXf b1(6*F+6,1),  A1(6*68+6, 2*66), edges(2,8), vertex_new(2*66, 1), A2(3*F+3, 66), b2x (3*F + 3,1), b2y(3*F + 3,1), V2x(66,1), V2y(66,1);
 
-for(int i=0; i<6*68; i++){
-    b1(i)=0;
+for(int i=0; i<6*68+6; i++){
+    b1(i,0)=0;
     for (int j=0; j<2*66;j++){
         A1(i,j)=0;
+        vertex_new(j,0)= 0;
     }
 }
+for (int i =0; i<3*F+3; i++){
+    b2x(i,0)=0;
+    b2y(i,0)=0;
+    for (int j=0; j<66; j++){
+        A2(i,j)=0;
+        V2x(j,0)=0;
+        V2y(j,0)=0;
+    }
+}
+float V2 [3*66];
 
-edges<<-1,0,1,0,0,0,0,0,
+edges<< -1,0,1,0,0,0,0,0,
         0,-1,0,1,0,0,0,0;
 
 //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -251,7 +262,8 @@ edges<<-1,0,1,0,0,0,0,0,
             mouse_to_world(p.x, p.y, width, height, inverseProj);
             find_closest_vertex(p.x, p.y, vertices);
             mouse_world[2*(number_of_clicks-1)] = p.x;
-            mouse_world[2*(number_of_clicks-1)+1] = p.y;            
+            mouse_world[2*(number_of_clicks-1)+1] = p.y;  
+                 
         }
         if (right_click==1){
             mouse_to_world_goal(p_goal.x, p_goal.y, width, height, inverseProj); //maybe need to divide by 0.35; 
@@ -289,25 +301,29 @@ edges<<-1,0,1,0,0,0,0,0,
             number_of_clicks = 0;
         }
 
-//---------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------- ------------------------------------------
 //ALGORITHM:
-int vi, vj, vl, vr = 0;
+
+if ((p_goal.x !=0)&&(p_goal.y!=0)){
+int vi, vj, vl, vr = 1000;
 float ex, ey;
 Eigen::MatrixXf E(2,2), H, G(8,4), G_no_vr(6,4), v(8,1), v_no_vr(6,1), t, T(2,2), b;
 
-b1(6*F) = w*p_goal.x;
-b1(6*F+1) = w*p_goal.y;
+b1(6*F) = w*p_goal.x/0.35;
+b1(6*F+1) = w*p_goal.y/0.35;
+b2x(3*F) = w*p_goal.x/0.35; // divide by 0.35
+b2y(3*F+1) = w*p_goal.y/0.35;
 for (int i=0; i<3; i++){
     A1(6*F + 2*i, 2*vertex_pos[i]) = w;
     A1(6*F + 2*i+1, 2*vertex_pos[i]+1)=w;
-    A2(3*F+i,vertex_pos[i] )=w;
+ A2(3*F+i,vertex_pos[i] )=w;
 }
 for (int i=1; i<5;i++){
-  b1(6*F+1+i) = w*mouse_world[i-1];
+  b1(6*F+1+i) = w*mouse_world[i+1];
 }
 for (int i=1; i<3; i++){
-    b2x(3*F+i) = w*mouse_world[2*(i-1)];
-    b2y(3*F+i) = w*mouse_world[2*(i-1)+1];
+    b2x(3*F+i) = w*mouse_world[2*i];
+    b2y(3*F+i) = w*mouse_world[2*i+1];
 }
 for(int i =0; i<F; i++){
     A2(3*i, FV[3*i]-1) = -1;
@@ -316,42 +332,46 @@ for(int i =0; i<F; i++){
     A2(3*i + 1, FV[3*i+2]-1)=1;
     A2(3*i+2, FV[3*i+2]-1) = -1;
     A2(3*i + 2, FV[3*i]-1)=1;
+
     for(int j=0; j<3;j++){
         vi = FV[3*i + j]-1;
-        vj = FV[3*i + j%2 + 1]-1;
-        vl = FV[3*i + 2*(j==0)+(j-1)]-1;
+        vj = FV[3*i + (j+1)%3]-1;
+        vl = FV[3*i + (j+2)%3]-1;
         ex = vertices[3*vj ] - vertices[3*vi];
         ey = vertices[3*vj+1] - vertices[3*vi+1];
         E(0,0)=ex;
-        E(1,0)= ey;
-        E(0,1) = -ey;
-        E(1,1)=ex;
-        
+        E(0,1)= ey;
+        E(1,0) = ey;
+        E(1,1)=-ex;
+
         for (int k=0; k<F; k++){
-            if (((vi == FV[3*k])|(vi == FV[3*k+1])|(vi==FV[3*k+2]))&((vj == FV[3*k])|(vj == FV[3*k+1])|(vj == FV[3*k+2]))&(vl !=FV[3*k])&(vl!=FV[3*k+1])&(vl!=FV[3*k+2])){
-                vr = (vi!=FV[3*k])*(vj!=FV[3*k])*FV[3*k] + (vi!=FV[3*k + 1])*(vj!=FV[3*k+1])*FV[3*k+1]+(vi!=FV[3*k + 2])*(vj!=FV[3*k+2])*FV[3*k+2]-1;
-             }
+            if (((vi == FV[3*k]-1)|(vi == FV[3*k+1]-1)|(vi==FV[3*k+2]-1))&((vj == FV[3*k]-1)|(vj == FV[3*k+1]-1)|(vj == FV[3*k+2]-1))&(vl !=FV[3*k]-1)&(vl!=FV[3*k+1]-1)&(vl!=FV[3*k+2]-1)){
+                vr = (vi!=FV[3*k]-1)*(vj!=FV[3*k]-1)*FV[3*k] + (vi!=FV[3*k + 1]-1)*(vj!=FV[3*k+1]-1)*FV[3*k+1]+(vi!=FV[3*k + 2]-1)*(vj!=FV[3*k+2]-1)*FV[3*k+2]-1;
+
+            }
         }
-        if (vr!=0){
-           
+      
+        if (vr<1000){
+
             G<< vertices[3*vi], vertices[3*vi+1], 1, 0,
-                vertices[3*vi + 1], -vertices[3*vi], 0,1,
+                vertices[3*vi + 1], -1*vertices[3*vi], 0,1,
                 vertices[3*vj], vertices[3*vj+1], 1, 0,
-                vertices[3*vj + 1], -vertices[3*vj], 0,1,
+                vertices[3*vj + 1], -1*vertices[3*vj], 0,1,
                 vertices[3*vl], vertices[3*vl+1], 1, 0, 
-                vertices[3*vl + 1], -vertices[3*vl], 0,1,
+                vertices[3*vl + 1], -1*vertices[3*vl], 0,1,
                 vertices[3*vr], vertices[3*vr+1], 1, 0, 
-                vertices[3*vr + 1], -vertices[3*vr], 0,1;
+                vertices[3*vr + 1], -1*vertices[3*vr], 0,1;
             H = edges - E*((((G.transpose()*G).inverse())*G.transpose()).block<2,8>(0,0));
+      
 
             A1(6*i+2*j,2*vr) = H(0,6);
             A1(6*i+2*j+1,2*vr) = H(1,6);
             A1(6*i+2*j,2*vr+1) = H(0,7);
             A1(6*i+2*j+1,2*vr+1) = H(1,7);  
 
-
+            vr =1000;
         }
-        else if(vr==0){
+        else {
             G_no_vr<< vertices[3*vi], vertices[3*vi+1], 1, 0,
                     vertices[3*vi + 1], -vertices[3*vi], 0,1,
                     vertices[3*vj], vertices[3*vj+1], 1, 0,
@@ -359,7 +379,6 @@ for(int i =0; i<F; i++){
                     vertices[3*vl], vertices[3*vl+1], 1, 0, 
                     vertices[3*vl + 1], -vertices[3*vl], 0,1;
             H = edges.block<2,6>(0,0) - E*((((G_no_vr.transpose()*G_no_vr).inverse())*G_no_vr.transpose()).block<2,6>(0,0));
-
         }
             A1(6*i+2*j,2*vi) = H(0,0);
             A1(6*i+2*j+1,2*vi) = H(1,0);
@@ -378,30 +397,33 @@ for(int i =0; i<F; i++){
     }
 }
 
+//std::cout<<"A "<<A1(1,6)<<"\n";
 
 
+vertex_new = (((A1.transpose()*A1).inverse())*(A1.transpose()))*b1;
 
-vertex_new = ((A1.transpose()*A1).inverse())*A1.transpose()*b1;
 
 
 for(int i =0; i<F; i++){
     for(int j=0; j<3;j++){
         vi = FV[3*i + j]-1;
-        vj = FV[3*i + j%2 + 1]-1;
-        vl = FV[3*i + 2*(j==0)+(j-1)]-1;
+        vj = FV[3*i + (j+1)%3]-1;
+        vl = FV[3*i + (j+2)%3]-1;
         ex = vertices[3*vj ] - vertices[3*vi];
         ey = vertices[3*vj+1] - vertices[3*vi+1];
         E(0,0)=ex;
         E(1,0)= ey;
-        E(0,1) = -ey;
-        E(1,1)=ex;
+        E(0,1) = ey;
+        E(1,1)=-ex;
         
-        for (int k=0; k<F; k++){
-            if (((vi == FV[3*k])|(vi == FV[3*k+1])|(vi==FV[3*k+2]))&((vj == FV[3*k])|(vj == FV[3*k+1])|(vj == FV[3*k+2]))&(vl !=FV[3*k])&(vl!=FV[3*k+1])&(vl!=FV[3*k+2])){
-                vr = (vi!=FV[3*k])*(vj!=FV[3*k])*FV[3*k] + (vi!=FV[3*k + 1])*(vj!=FV[3*k+1])*FV[3*k+1]+(vi!=FV[3*k + 2])*(vj!=FV[3*k+2])*FV[3*k+2]-1;
-             }
+     for (int k=0; k<F; k++){
+            if (((vi == FV[3*k]-1)|(vi == FV[3*k+1]-1)|(vi==FV[3*k+2]-1))&((vj == FV[3*k]-1)|(vj == FV[3*k+1]-1)|(vj == FV[3*k+2]-1))&(vl !=FV[3*k]-1)&(vl!=FV[3*k+1]-1)&(vl!=FV[3*k+2]-1)){
+                vr = (vi!=FV[3*k]-1)*(vj!=FV[3*k]-1)*FV[3*k] + (vi!=FV[3*k + 1]-1)*(vj!=FV[3*k+1]-1)*FV[3*k+1]+(vi!=FV[3*k + 2]-1)*(vj!=FV[3*k+2]-1)*FV[3*k+2]-1;
+
+            }
         }
-        if (vr!=0){
+      
+        if (vr<1000){
            
             G<< vertices[3*vi], vertices[3*vi+1], 1, 0,
                 vertices[3*vi + 1], -vertices[3*vi], 0,1,
@@ -413,8 +435,10 @@ for(int i =0; i<F; i++){
                 vertices[3*vr + 1], -vertices[3*vr], 0,1;
             v<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1), vertex_new(2*vr), vertex_new(2*vr+1) ; 
             t = (((G.transpose()*G).inverse()*G.transpose()).block<2,8>(0,0))*v;
+            vr =1000;
+        
     }
-    else if(vr==0){
+    else {
             G_no_vr<< vertices[3*vi], vertices[3*vi+1], 1, 0,
                     vertices[3*vi + 1], -vertices[3*vi], 0,1,
                     vertices[3*vj], vertices[3*vj+1], 1, 0,
@@ -424,15 +448,29 @@ for(int i =0; i<F; i++){
              v_no_vr<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1); 
             t = (((G_no_vr.transpose()*G_no_vr).inverse()*G_no_vr.transpose()).block<2,6>(0,0))*v_no_vr;
         }
-        T<< t(0,0), t(1,0),
-           -t(1,0), t(0,0);
-           b = T.normalized();
-           b2x(3*i +j) = b(0);
-           b2x(3*i +j) = b(1);
-    }
+        // T<< t(0,0), t(1,0),
+        //    -t(1,0), t(0,0);
+        //    b = T.normalized();
+        //    b2x(3*i +j) = b(0,0);
+        //    b2x(3*i +j) = b(1,0);
+               }
 }
-V2x = (A2.transpose()*A2).inverse()*(A2.transpose())*b2x;
-V2y = (A2.transpose()*A2).inverse()*(A2.transpose())*b2y;
+// V2x = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2x;
+// V2y = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2y;
+
+for (int i=0; i<66; i++){
+    V2[3*i] = vertex_new(2*i,0);
+    V2[3*i + 1]= vertex_new(2*i+1,0);
+    V2[3*i + 2] = 0;
+}
+//std::cout<<vertex_new(0,0)<<"\n";
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), &V2[0]);
+   //  glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), &V2[0], GL_STREAM_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+}
+
 
 //----------------------------------------------------------------------------------------------------------------
 
