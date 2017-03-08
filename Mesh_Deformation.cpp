@@ -312,7 +312,8 @@ Eigen::MatrixXf E(2,2), H, G(8,4), G_no_vr(6,4), v(8,1), v_no_vr(6,1), t, T(2,2)
 b1(6*F) = w*p_goal.x/0.35;
 b1(6*F+1) = w*p_goal.y/0.35;
 b2x(3*F) = w*p_goal.x/0.35; // divide by 0.35
-b2y(3*F+1) = w*p_goal.y/0.35;
+b2y(3*F) = w*p_goal.y/0.35;
+
 for (int i=0; i<3; i++){
     A1(6*F + 2*i, 2*vertex_pos[i]) = w;
     A1(6*F + 2*i+1, 2*vertex_pos[i]+1)=w;
@@ -418,26 +419,25 @@ for(int i =0; i<F; i++){
 
        
         
-     for (int k=0; k<F; k++){
+        for (int k=0; k<F; k++){
             if (((vi == FV[3*k]-1)|(vi == FV[3*k+1]-1)|(vi==FV[3*k+2]-1))&((vj == FV[3*k]-1)|(vj == FV[3*k+1]-1)|(vj == FV[3*k+2]-1))&(vl !=FV[3*k]-1)&(vl!=FV[3*k+1]-1)&(vl!=FV[3*k+2]-1)){
                 vr = (vi!=FV[3*k]-1)*(vj!=FV[3*k]-1)*FV[3*k] + (vi!=FV[3*k + 1]-1)*(vj!=FV[3*k+1]-1)*FV[3*k+1]+(vi!=FV[3*k + 2]-1)*(vj!=FV[3*k+2]-1)*FV[3*k+2]-1;
-
             }
         }
        
         if (vr<1000){
            
             G<< vertices[3*vi], vertices[3*vi+1], 1, 0,
-                vertices[3*vi + 1], -vertices[3*vi], 0,1,
+                vertices[3*vi + 1], -1*vertices[3*vi], 0,1,
                 vertices[3*vj], vertices[3*vj+1], 1, 0,
-                vertices[3*vj + 1], -vertices[3*vj], 0,1,
+                vertices[3*vj + 1], -1*vertices[3*vj], 0,1,
                 vertices[3*vl], vertices[3*vl+1], 1, 0, 
-                vertices[3*vl + 1], -vertices[3*vl], 0,1,
+                vertices[3*vl + 1], -1*vertices[3*vl], 0,1,
                 vertices[3*vr], vertices[3*vr+1], 1, 0, 
-                vertices[3*vr + 1], -vertices[3*vr], 0,1;
+                vertices[3*vr + 1], -1*vertices[3*vr], 0,1;
             v<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1), vertex_new(2*vr), vertex_new(2*vr+1) ; 
-            t = (((G.transpose()*G).inverse()*G.transpose()).block<2,8>(0,0))*v;
-            std::cout<<"t "<<t(0,0)<<" " <<t(1,0)<<"\n";
+            t = ((((G.transpose()*G).inverse())*(G.transpose())).block<2,8>(0,0))*v;
+                 
             vr =1000;
         
     }
@@ -449,21 +449,24 @@ for(int i =0; i<F; i++){
                     vertices[3*vl], vertices[3*vl+1], 1, 0, 
                     vertices[3*vl + 1], -vertices[3*vl], 0,1;
              v_no_vr<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1); 
-            t = (((G_no_vr.transpose()*G_no_vr).inverse()*G_no_vr.transpose()).block<2,6>(0,0))*v_no_vr;
+            t = ((((G_no_vr.transpose()*G_no_vr).inverse())*(G_no_vr.transpose())).block<2,6>(0,0))*v_no_vr;
         }
         T<< t(0,0), t(1,0),
            -t(1,0), t(0,0);
-           b = T.normalized();
-           b2x(3*i +j) = b(0,0);
-           b2x(3*i +j) = b(1,0);
+
+          b = 1/(sqrt(t(0)*t(0)+t(1)*t(1)))*T*E;
+          // b = T.normalized();
+        //  std::cout<<"b "<<b(0) <<" "<<b(1)<<"\n";
+           b2x(3*i +j) = b(0,0); //these are the problem
+           b2y(3*i +j) = b(1,0);
                }
 }
 V2x = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2x;
 V2y = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2y;
 
 for (int i=0; i<66; i++){
-    V2[3*i] = vertex_new(2*i,0);
-    V2[3*i + 1]= vertex_new(2*i+1,0);
+    V2[3*i] = V2x(i,0);
+    V2[3*i + 1]= V2y(i,0);
     V2[3*i + 2] = 0;
 }
 //std::cout<<vertex_new(0,0)<<"\n";
