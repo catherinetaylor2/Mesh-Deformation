@@ -31,9 +31,13 @@ int number_of_clicks = 0;
 int right_click = 0;
 GLfloat mouse_world [6] = {0,0,0,0,0,0};
 GLint vertex_pos[3]={0,0,0};
+int mesh_reset = 0;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
     if(button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_PRESS){
+        if (number_of_clicks==3){
+            return;
+        }
         mouse_clicked = 1;
         number_of_clicks++;
         double xpos, ypos;
@@ -49,6 +53,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         p_goal.y= ypos;
     }
 }
+
+
 
 void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){
     float x = (float)(-2.0f*mouse_x)/(float)width + 1, y = (float)(2.0f*mouse_y)/(float)height - 1;
@@ -79,6 +85,28 @@ void find_closest_vertex(float x_coord, float y_coord, float * vertices, int num
     p.y = vertices[min_index+1];
     vertex_pos[number_of_clicks-1]= min_index/3;
     }
+void reset(void){
+    p.x=0;
+    p.y=0;
+    p_goal.x=0;
+    p_goal.y=0;
+    mouse_clicked = 0;
+    number_of_clicks = 0;
+    right_click = 0;
+    for (int i=0; i<6; i++){
+        mouse_world[i]=0;
+    }
+    for (int i=0; i<3; i++){
+        vertex_pos[i]=0;
+    }
+    mesh_reset = 1;
+}
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+    if( key== GLFW_KEY_ENTER && action == GLFW_PRESS){
+        reset();
+        std::cout<<"enter \n";
+    }
+}
 
 int main(){
 
@@ -134,6 +162,7 @@ int main(){
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetKeyCallback(window, key_callback);
     
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -164,12 +193,12 @@ int main(){
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
 
     GLuint IBO;
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*number_of_faces*sizeof(unsigned int), indices, GL_STATIC_DRAW); 
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*number_of_faces*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW); 
 
     float selected_point [9] ={
         1.0f, 1.0f, 0.0f,
@@ -306,14 +335,18 @@ int main(){
         glPointSize(10.0f);
         glDrawArrays(GL_POINTS, 0,1);
 
-        if (number_of_clicks==3){
-            number_of_clicks = 0;
-        }
 
 //--------------------------------------------------------------------- ------------------------------------------
 //ALGORITHM:
 
-        if ((p_goal.x !=0)&&(p_goal.y!=0)){
+  if (mesh_reset){
+        mesh_reset = !mesh_reset; 
+        // glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        // glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
+        // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+        if ((p_goal.x !=0)&&(p_goal.y!=0)&&(!mesh_reset)){
             int vi, vj, vl, vr = 1000;
             float ex, ey;
             Eigen::MatrixXf E(2,2), H,  v(8,1), v_no_vr(6,1), t, T(2,2), b, vr_exist(3*number_of_faces,1);
@@ -378,8 +411,7 @@ int main(){
                         G(6,0) = vertices[3*vr]; 
                         G(6,1) = vertices[3*vr+1];
                         G(7,0) = vertices[3*vr+1];
-                        G(7,1) = -vertices[3*vr];
-                        
+                        G(7,1) = -vertices[3*vr];                        
                        
                         H = edges - E*((((G.transpose()*G).inverse())*G.transpose()).block<2,8>(0,0));
                 
@@ -502,6 +534,7 @@ int main(){
             glBufferSubData(GL_ARRAY_BUFFER, 0,  3*number_of_vertices*sizeof(float), &V2[0]);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
+  
 //----------------------------------------------------------------------------------------------------------------
 
         glDisableVertexAttribArray(0);
