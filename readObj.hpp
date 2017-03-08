@@ -9,6 +9,7 @@ class ObjFile{
         int* get_faceN(void);
         int* get_faceV(void);
         int get_number_of_faces(void);
+        int get_number_of_vertices(void);
     private:
         const char* File_Name;
         int number_of_normals, number_of_vertices, number_of_faces;

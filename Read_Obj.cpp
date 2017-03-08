@@ -181,7 +181,7 @@ int* ObjFile::get_faceN(void){
   }
 
 number_of_faces = k_vf-1;
-std::cout<<"face "<<number_of_faces<<"\n";
+
   int* FN = new int[3*number_of_faces];
 
   for(int i=0; i<3*number_of_faces; i+=3){
@@ -198,18 +198,6 @@ int ObjFile::get_number_of_faces(void){
   return number_of_faces;
 }
 
-// int main(){
-
-//   ObjFile mesh("2D-mesh.obj");
-
-//   float* V = mesh.get_vertices();
-//   float* N = mesh.get_normals();
-//   int* FV = mesh.get_faceV();
-//   int* FN = mesh.get_faceN();
-  
-//   for(int i=0; i<12; i+=3){
-//     std::cout<<"V1 "<<FN[i]<<"V2 "<<FN[i+1]<<"V3 "<<FN[i+2]<<"\n";
-//   }
-
-//     return 0;
-// }
+int ObjFile::get_number_of_vertices(void){
+  return number_of_vertices;
+}
