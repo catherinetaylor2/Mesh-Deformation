@@ -5,9 +5,12 @@ Coursework for computer animation and games module.
 
 Input a traingulated mesh in a .obj function and Read_Obj can return arrays containg vertex position, normals and faces. The mesh deformation code allows the user to input and chosen mesh, select 3 handles and deform the mesh as required.
 
+Left click to select handles and right click to choose goal position. Everything can be reset by hitting enter key.
+
 ###To do:
   
 * Add in arrays for texture values in Read_Obj.
-* Add in deformation algorithm.
+* Reduce run time.
+* Look at 3D methods. 
 
 
