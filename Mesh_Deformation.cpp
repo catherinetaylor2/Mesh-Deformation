@@ -16,6 +16,7 @@
 #include "shader.hpp"
 #include <Eigen/Eigen/Dense>
 #include "readObj.hpp"
+#include <omp.h> 
 
 #define infinity 100000000
 
@@ -88,7 +89,7 @@ int main(){
     int* FN = mesh.get_faceN();
     int number_of_faces = mesh.get_number_of_faces();
     int number_of_vertices = mesh.get_number_of_vertices();
-    float scale = 0.25;
+    float scale = 0.2;
 
     glfwInit();
 
@@ -193,8 +194,10 @@ int main(){
 //ALGORITHM
 
     int w=1000;
-    Eigen::MatrixXf b1(6*number_of_faces+6,1),  A1(6*number_of_faces+6, 2*number_of_vertices), edges(2,8), vertex_new(2*number_of_vertices, 1), A2(3*number_of_faces+3, number_of_vertices), b2x (3*number_of_faces + 3,1), b2y(3*number_of_faces + 3,1), V2x(number_of_vertices,1), V2y(number_of_vertices,1);
-    float V2 [3*66];
+    Eigen::MatrixXf b1(6*number_of_faces+6,1), G(8,4), G_no_vr(6,4), A1(6*number_of_faces+6, 2*number_of_vertices), edges(2,8), vertex_new(2*number_of_vertices, 1), A2(3*number_of_faces+3, number_of_vertices), b2x (3*number_of_faces + 3,1), b2y(3*number_of_faces + 3,1), V2x(number_of_vertices,1), V2y(number_of_vertices,1);
+   
+    float* V2 = new float[3*number_of_vertices];
+
     for(int i=0; i<6*number_of_faces+6; i++){
         b1(i,0)=0;
         for (int j=0; j<2*number_of_vertices;j++){
@@ -213,6 +216,16 @@ int main(){
     }
     edges<< -1,0,1,0,0,0,0,0,
             0,-1,0,1,0,0,0,0;
+    
+    for(int j=0; j<8; j++){
+        G(j,2) = (j+1)%2;
+        G(j,3) = j%2;        
+    }
+     for(int j=0; j<6; j++){
+        G_no_vr(j,2) = (j+1)%2;
+        G_no_vr(j,3) = j%2;        
+    }
+
 
 //---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -303,8 +316,8 @@ int main(){
         if ((p_goal.x !=0)&&(p_goal.y!=0)){
             int vi, vj, vl, vr = 1000;
             float ex, ey;
-            Eigen::MatrixXf E(2,2), H, G(8,4), G_no_vr(6,4), v(8,1), v_no_vr(6,1), t, T(2,2), b;
-
+            Eigen::MatrixXf E(2,2), H,  v(8,1), v_no_vr(6,1), t, T(2,2), b, vr_exist(3*number_of_faces,1);
+             
             b1(6*number_of_faces) = w*p_goal.x/scale;
             b1(6*number_of_faces+1) = w*p_goal.y/scale;
             b2x(3*number_of_faces) = w*p_goal.x/scale; // divide by scale
@@ -345,17 +358,29 @@ int main(){
                         if (((vi == FV[3*k]-1)|(vi == FV[3*k+1]-1)|(vi==FV[3*k+2]-1))&((vj == FV[3*k]-1)|(vj == FV[3*k+1]-1)|(vj == FV[3*k+2]-1))&(vl !=FV[3*k]-1)&(vl!=FV[3*k+1]-1)&(vl!=FV[3*k+2]-1)){
                             vr = (vi!=FV[3*k]-1)*(vj!=FV[3*k]-1)*FV[3*k] + (vi!=FV[3*k + 1]-1)*(vj!=FV[3*k+1]-1)*FV[3*k+1]+(vi!=FV[3*k + 2]-1)*(vj!=FV[3*k+2]-1)*FV[3*k+2]-1;
                         }
-                    }
+                    } 
+                    vr_exist(3*i + j, 0)=vr;
                 
                     if (vr<1000){
-                        G<< vertices[3*vi], vertices[3*vi+1], 1, 0,
-                            vertices[3*vi + 1], -1*vertices[3*vi], 0,1,
-                            vertices[3*vj], vertices[3*vj+1], 1, 0,
-                            vertices[3*vj + 1], -1*vertices[3*vj], 0,1,
-                            vertices[3*vl], vertices[3*vl+1], 1, 0, 
-                            vertices[3*vl + 1], -1*vertices[3*vl], 0,1,
-                            vertices[3*vr], vertices[3*vr+1], 1, 0, 
-                            vertices[3*vr + 1], -1*vertices[3*vr], 0,1;
+                 
+                        G(0,0) = vertices[3*vi]; 
+                        G(0,1) = vertices[3*vi+1];
+                        G(1,0) = vertices[3*vi+1];
+                        G(1,1) = -vertices[3*vi];
+                        G(2,0) = vertices[3*vj]; 
+                        G(2,1) = vertices[3*vj+1];
+                        G(3,0) = vertices[3*vj+1];
+                        G(3,1) = -vertices[3*vj];
+                        G(4,0) = vertices[3*vl]; 
+                        G(4,1) = vertices[3*vl+1];
+                        G(5,0) = vertices[3*vl+1];
+                        G(5,1) = -vertices[3*vl];
+                        G(6,0) = vertices[3*vr]; 
+                        G(6,1) = vertices[3*vr+1];
+                        G(7,0) = vertices[3*vr+1];
+                        G(7,1) = -vertices[3*vr];
+                        
+                       
                         H = edges - E*((((G.transpose()*G).inverse())*G.transpose()).block<2,8>(0,0));
                 
                         A1(6*i+2*j,2*vr) = H(0,6);
@@ -365,13 +390,21 @@ int main(){
 
                         vr =1000;
                     }
-                    else{
-                        G_no_vr<< vertices[3*vi], vertices[3*vi+1], 1, 0,
-                                vertices[3*vi + 1], -vertices[3*vi], 0,1,
-                                vertices[3*vj], vertices[3*vj+1], 1, 0,
-                                vertices[3*vj + 1], -vertices[3*vj], 0,1,
-                                vertices[3*vl], vertices[3*vl+1], 1, 0, 
-                                vertices[3*vl + 1], -vertices[3*vl], 0,1;
+                    else{              
+
+                        G_no_vr(0,0) = vertices[3*vi]; 
+                        G_no_vr(0,1) = vertices[3*vi+1];
+                        G_no_vr(1,0) = vertices[3*vi+1];
+                        G_no_vr(1,1) = -vertices[3*vi];
+                        G_no_vr(2,0) = vertices[3*vj]; 
+                        G_no_vr(2,1) = vertices[3*vj+1];
+                        G_no_vr(3,0) = vertices[3*vj+1];
+                        G_no_vr(3,1) = -vertices[3*vj];
+                        G_no_vr(4,0) = vertices[3*vl]; 
+                        G_no_vr(4,1) = vertices[3*vl+1];
+                        G_no_vr(5,0) = vertices[3*vl+1];
+                        G_no_vr(5,1) = -vertices[3*vl];
+
                         H = edges.block<2,6>(0,0) - E*((((G_no_vr.transpose()*G_no_vr).inverse())*G_no_vr.transpose()).block<2,6>(0,0));
                     }
                         A1(6*i+2*j,2*vi) = H(0,0);
@@ -398,40 +431,54 @@ int main(){
                     vi = FV[3*i + j]-1;
                     vj = FV[3*i + (j+1)%3]-1;
                     vl = FV[3*i + (j+2)%3]-1;
+                    vr = vr_exist(3*i +j);
                     ex = vertices[3*vj ] - vertices[3*vi];
                     ey = vertices[3*vj+1] - vertices[3*vi+1];
                     E(0,0)=ex;
                     E(1,0)= ey;
                     E(0,1) = ey;
                     E(1,1)=-ex;            
+                                       
+              
+                    if (vr<1000){  
+
+                        G(0,0) = vertices[3*vi]; 
+                        G(0,1) = vertices[3*vi+1];
+                        G(1,0) = vertices[3*vi+1];
+                        G(1,1) = -vertices[3*vi];
+                        G(2,0) = vertices[3*vj]; 
+                        G(2,1) = vertices[3*vj+1];
+                        G(3,0) = vertices[3*vj+1];
+                        G(3,1) = -vertices[3*vj];
+                        G(4,0) = vertices[3*vl]; 
+                        G(4,1) = vertices[3*vl+1];
+                        G(5,0) = vertices[3*vl+1];
+                        G(5,1) = -vertices[3*vl];
+                        G(6,0) = vertices[3*vr]; 
+                        G(6,1) = vertices[3*vr+1];
+                        G(7,0) = vertices[3*vr+1];
+                        G(7,1) = -vertices[3*vr];  
                     
-                    for (int k=0; k<number_of_faces; k++){
-                        if (((vi == FV[3*k]-1)|(vi == FV[3*k+1]-1)|(vi==FV[3*k+2]-1))&((vj == FV[3*k]-1)|(vj == FV[3*k+1]-1)|(vj == FV[3*k+2]-1))&(vl !=FV[3*k]-1)&(vl!=FV[3*k+1]-1)&(vl!=FV[3*k+2]-1)){
-                            vr = (vi!=FV[3*k]-1)*(vj!=FV[3*k]-1)*FV[3*k] + (vi!=FV[3*k + 1]-1)*(vj!=FV[3*k+1]-1)*FV[3*k+1]+(vi!=FV[3*k + 2]-1)*(vj!=FV[3*k+2]-1)*FV[3*k+2]-1;
-                        }
-                    }
-                
-                    if (vr<1000){                
-                        G<< vertices[3*vi], vertices[3*vi+1], 1, 0,
-                            vertices[3*vi + 1], -1*vertices[3*vi], 0,1,
-                            vertices[3*vj], vertices[3*vj+1], 1, 0,
-                            vertices[3*vj + 1], -1*vertices[3*vj], 0,1,
-                            vertices[3*vl], vertices[3*vl+1], 1, 0, 
-                            vertices[3*vl + 1], -1*vertices[3*vl], 0,1,
-                            vertices[3*vr], vertices[3*vr+1], 1, 0, 
-                            vertices[3*vr + 1], -1*vertices[3*vr], 0,1;
                         v<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1), vertex_new(2*vr), vertex_new(2*vr+1) ; 
                         t = ((((G.transpose()*G).inverse())*(G.transpose())).block<2,8>(0,0))*v;
                             
                         vr =1000;                
                     }
                     else{
-                        G_no_vr<< vertices[3*vi], vertices[3*vi+1], 1, 0,
-                                vertices[3*vi + 1], -vertices[3*vi], 0,1,
-                                vertices[3*vj], vertices[3*vj+1], 1, 0,
-                                vertices[3*vj + 1], -vertices[3*vj], 0,1,
-                                vertices[3*vl], vertices[3*vl+1], 1, 0, 
-                                vertices[3*vl + 1], -vertices[3*vl], 0,1;
+                                                      
+                        G_no_vr(0,0) = vertices[3*vi]; 
+                        G_no_vr(0,1) = vertices[3*vi+1];
+                        G_no_vr(1,0) = vertices[3*vi+1];
+                        G_no_vr(1,1) = -vertices[3*vi];
+                        G_no_vr(2,0) = vertices[3*vj]; 
+                        G_no_vr(2,1) = vertices[3*vj+1];
+                        G_no_vr(3,0) = vertices[3*vj+1];
+                        G_no_vr(3,1) = -vertices[3*vj];
+                        G_no_vr(4,0) = vertices[3*vl]; 
+                        G_no_vr(4,1) = vertices[3*vl+1];
+                        G_no_vr(5,0) = vertices[3*vl+1];
+                        G_no_vr(5,1) = -vertices[3*vl];
+
                         v_no_vr<<vertex_new(2*vi), vertex_new(2*vi+1), vertex_new(2*vj), vertex_new(2*vj+1), vertex_new(2*vl), vertex_new(2*vl+1); 
                         t = ((((G_no_vr.transpose()*G_no_vr).inverse())*(G_no_vr.transpose())).block<2,6>(0,0))*v_no_vr;
                     }
@@ -481,11 +528,17 @@ int main(){
     delete FV;
     delete vertices;
     delete indices;
+    delete V2;
     A1.resize(0,0);
+    A2.resize(0,0);
     vertex_new.resize(0,0);
     edges.resize(0,0);
     b1.resize(0,0);
-   
+    b2x.resize(0,0);
+    b2y.resize(0,0);
+    G.resize(0,0);
+    G_no_vr.resize(0,0);
+    
 
     glfwTerminate();
 
