@@ -145,15 +145,15 @@ int main(){
     GLuint GoalPointprogramID = LoadShaders( "point_vertexShader.vertexshader", "goal.fragmentshader");
     GLint GoalpointMVP = glGetUniformLocation(GoalPointprogramID, "MVP_point");
 
-     float vertices [3*66];
+    
+    float* vertices = new float[3*number_of_vertices];
     for(int i=0; i<3*number_of_vertices;i+=3){
         vertices[i+1]=V[i];
         vertices[i]=V[i+1];
         vertices[i+2]=V[i+2];
     }
 
-    unsigned int indices [3*68] ;
-
+    unsigned int* indices = new unsigned int [3*number_of_faces];
     for(int i=0; i<3*number_of_faces; i+=3){
         indices[i]=FV[i]-1;
         indices[i+1]=FV[i+1]-1;
@@ -163,12 +163,12 @@ int main(){
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), &vertices[0], GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_STREAM_DRAW);
 
     GLuint IBO;
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*number_of_faces*sizeof(unsigned int), indices, GL_STATIC_DRAW); 
 
     float selected_point [9] ={
         1.0f, 1.0f, 0.0f,
@@ -452,7 +452,7 @@ int main(){
             }
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), &V2[0]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0,  3*number_of_vertices*sizeof(float), &V2[0]);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 //----------------------------------------------------------------------------------------------------------------
@@ -479,6 +479,8 @@ int main(){
     delete N;
     delete FN;
     delete FV;
+    delete vertices;
+    delete indices;
     A1.resize(0,0);
     vertex_new.resize(0,0);
     edges.resize(0,0);
