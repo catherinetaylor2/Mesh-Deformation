@@ -54,8 +54,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
-
-
 void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){
     float x = (float)(-2.0f*mouse_x)/(float)width + 1, y = (float)(2.0f*mouse_y)/(float)height - 1;
     glm::vec4 V = glm::vec4(x, y, 0, 1);
@@ -99,17 +97,16 @@ void reset(void){
     for (int i=0; i<3; i++){
         vertex_pos[i]=0;
     }
-    mesh_reset = 1;
+    mesh_reset = 1; 
 }
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     if( key== GLFW_KEY_ENTER && action == GLFW_PRESS){
         reset();
-        std::cout<<"enter \n";
     }
 }
 
 int main(){
-
+ 
     ObjFile mesh("din32.obj");
     float* V = mesh.get_vertices();
     float* N = mesh.get_normals();
@@ -118,7 +115,7 @@ int main(){
     int number_of_faces = mesh.get_number_of_faces();
     int number_of_vertices = mesh.get_number_of_vertices();
     float scale = 0.2;
-
+    
     glfwInit();
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -224,8 +221,7 @@ int main(){
 
     int w=1000;
     Eigen::MatrixXf b1(6*number_of_faces+6,1), G(8,4), G_no_vr(6,4), A1(6*number_of_faces+6, 2*number_of_vertices), edges(2,8), vertex_new(2*number_of_vertices, 1), A2(3*number_of_faces+3, number_of_vertices), b2x (3*number_of_faces + 3,1), b2y(3*number_of_faces + 3,1), V2x(number_of_vertices,1), V2y(number_of_vertices,1);
-   
-    float* V2 = new float[3*number_of_vertices];
+     float* V2 = new float[3*number_of_vertices];
 
     for(int i=0; i<6*number_of_faces+6; i++){
         b1(i,0)=0;
@@ -254,7 +250,6 @@ int main(){
         G_no_vr(j,2) = (j+1)%2;
         G_no_vr(j,3) = j%2;        
     }
-
 
 //---------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -339,14 +334,26 @@ int main(){
 //--------------------------------------------------------------------- ------------------------------------------
 //ALGORITHM:
 
-  if (mesh_reset){
-        mesh_reset = !mesh_reset; 
-        // glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        // glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
-        // glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
+        if (mesh_reset){ //MESH RESET FN
+            mesh_reset = !mesh_reset; 
+            glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+            glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            for(int i=0; i<6*number_of_faces+6; i++){
+                for (int j=0; j<2*number_of_vertices;j++){
+                    A1(i,j)=0;
+                }
+            }
+            for (int i =0; i<3*number_of_faces+3; i++){
+                for (int j=0; j<number_of_vertices; j++){
+                  A2(i,j)=0;
+                }
+            }
+        }
 
         if ((p_goal.x !=0)&&(p_goal.y!=0)&&(!mesh_reset)){
+            
             int vi, vj, vl, vr = 1000;
             float ex, ey;
             Eigen::MatrixXf E(2,2), H,  v(8,1), v_no_vr(6,1), t, T(2,2), b, vr_exist(3*number_of_faces,1);
