@@ -562,21 +562,12 @@ int main(){
     glDeleteProgram(PointprogramID);
     glDeleteProgram(GoalPointprogramID);
     delete V;
-    delete N;
+    delete N;     
     delete FN;
     delete FV;
     delete vertices;
     delete indices;
     delete V2;
-    A1.resize(0,0);
-    A2.resize(0,0);
-    vertex_new.resize(0,0);
-    edges.resize(0,0);
-    b1.resize(0,0);
-    b2x.resize(0,0);
-    b2y.resize(0,0);
-    G.resize(0,0);
-    G_no_vr.resize(0,0);
     
     glfwTerminate();
 
