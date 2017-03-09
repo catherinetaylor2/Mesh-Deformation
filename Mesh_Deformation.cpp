@@ -25,7 +25,7 @@ struct Point {
 	GLfloat y;
 };
 
-Point p, p_goal;
+Point p, p_goal, p_previous;
 int mouse_clicked = 0;
 int number_of_clicks = 0;
 int right_click = 0;
@@ -88,6 +88,8 @@ void reset(void){
     p.y=0;
     p_goal.x=0;
     p_goal.y=0;
+    p_previous.x=0;
+    p_previous.y=0;
     mouse_clicked = 0;
     number_of_clicks = 0;
     right_click = 0;
@@ -223,6 +225,10 @@ int main(){
     Eigen::MatrixXf b1(6*number_of_faces+6,1), G(8,4), G_no_vr(6,4), A1(6*number_of_faces+6, 2*number_of_vertices), edges(2,8), vertex_new(2*number_of_vertices, 1), A2(3*number_of_faces+3, number_of_vertices), b2x (3*number_of_faces + 3,1), b2y(3*number_of_faces + 3,1), V2x(number_of_vertices,1), V2y(number_of_vertices,1);
      float* V2 = new float[3*number_of_vertices];
 
+     for(int i=0; i<3*number_of_vertices; i++){
+         V2[i] = vertices[i];
+     }
+
     for(int i=0; i<6*number_of_faces+6; i++){
         b1(i,0)=0;
         for (int j=0; j<2*number_of_vertices;j++){
@@ -293,7 +299,7 @@ int main(){
         if (mouse_clicked){
             mouse_clicked = !mouse_clicked;
             mouse_to_world(p.x, p.y, width, height, inverseProj);
-            find_closest_vertex(p.x, p.y, vertices, number_of_vertices, scale);
+            find_closest_vertex(p.x, p.y, V2, number_of_vertices, scale);
             mouse_world[2*(number_of_clicks-1)] = p.x;
             mouse_world[2*(number_of_clicks-1)+1] = p.y;  
                  
@@ -330,6 +336,9 @@ int main(){
         glPointSize(10.0f);
         glDrawArrays(GL_POINTS, 0,1);
 
+if (number_of_clicks ==3){
+    number_of_clicks = 0;
+}
 
 //--------------------------------------------------------------------- ------------------------------------------
 //ALGORITHM:
@@ -340,6 +349,14 @@ int main(){
             glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+        for(int i=0; i<3*number_of_vertices; i++){
+         V2[i] = vertices[i];
+     }
+        }
+
+        if ((p_goal.x !=p_previous.x)&&(p_goal.y!=p_previous.y)&&(!mesh_reset)){
+            p_previous.x=p_goal.x;
+            p_previous.y=p_goal.y;
             for(int i=0; i<6*number_of_faces+6; i++){
                 for (int j=0; j<2*number_of_vertices;j++){
                     A1(i,j)=0;
@@ -350,9 +367,6 @@ int main(){
                   A2(i,j)=0;
                 }
             }
-        }
-
-        if ((p_goal.x !=0)&&(p_goal.y!=0)&&(!mesh_reset)){
             
             int vi, vj, vl, vr = 1000;
             float ex, ey;
@@ -562,12 +576,13 @@ int main(){
     glDeleteProgram(PointprogramID);
     glDeleteProgram(GoalPointprogramID);
     delete V;
-    delete N;     
+    delete N;
     delete FN;
     delete FV;
     delete vertices;
     delete indices;
     delete V2;
+
     
     glfwTerminate();
 
