@@ -107,7 +107,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 int main(){
  
-    ObjFile mesh("din32.obj");
+    ObjFile mesh("dino.obj");
     float* V = mesh.get_vertices();
     float* N = mesh.get_normals();
     int* FV = mesh.get_faceV();
@@ -176,8 +176,8 @@ int main(){
     float* vertices = new float[3*number_of_vertices];
     for(int i=0; i<3*number_of_vertices;i+=3){
         vertices[i+1]=V[i];
-        vertices[i]=V[i+1];
-        vertices[i+2]=V[i+2];
+        vertices[i]=-V[i+2];
+        vertices[i+2]=V[i+1];
     }
 
     unsigned int* indices = new unsigned int [3*number_of_faces];
@@ -416,7 +416,7 @@ int main(){
                         G(5,0) = vertices[3*vl+1];
                         G(5,1) = -vertices[3*vl];
                         G(6,0) = vertices[3*vr]; 
-                        G(6,1) = vertices[3*vr+1];
+                        G(6,1) = vertices[3*vr+1]; 
                         G(7,0) = vertices[3*vr+1];
                         G(7,1) = -vertices[3*vr];                        
                        
@@ -462,7 +462,7 @@ int main(){
                         A1(6*i+2*j+1,2*vl+1) = H(1,5);        
                 }
             }
-            vertex_new = (((A1.transpose()*A1).inverse())*(A1.transpose()))*b1;
+            vertex_new = (A1.transpose()*A1).llt().solve(A1.transpose()*b1);
 
             for(int i =0; i<number_of_faces; i++){
                 for(int j=0; j<3;j++){
@@ -528,8 +528,8 @@ int main(){
                     b2y(3*i +j) = b(1,0);
                 }
             }
-            V2x = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2x;
-            V2y = ((A2.transpose()*A2).inverse())*(A2.transpose())*b2y;
+            V2x = (A2.transpose()*A2).llt().solve(A2.transpose()*b2x);
+            V2y = (A2.transpose()*A2).llt().solve(A2.transpose()*b2y);
 
             for (int i=0; i<number_of_vertices; i++){
                 V2[3*i] = V2x(i,0);
@@ -545,7 +545,6 @@ int main(){
 //----------------------------------------------------------------------------------------------------------------
 
         glDisableVertexAttribArray(0);
-        // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -579,7 +578,6 @@ int main(){
     G.resize(0,0);
     G_no_vr.resize(0,0);
     
-
     glfwTerminate();
 
     return 0;

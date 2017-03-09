@@ -201,3 +201,4 @@ int ObjFile::get_number_of_faces(void){
 int ObjFile::get_number_of_vertices(void){
   return number_of_vertices;
 }
+
