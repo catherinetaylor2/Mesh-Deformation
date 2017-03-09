@@ -167,13 +167,16 @@ int main(){
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
+
+
     GLuint programID = LoadShaders( "vertex_shader.vertexshader", "fragment_shader.fragmentshader" );
     GLint Mvp = glGetUniformLocation(programID, "MVP");
     GLuint PointprogramID = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
     GLint pointMVP = glGetUniformLocation(PointprogramID, "MVP_point");
-    GLuint GoalPointprogramID = LoadShaders( "point_vertexShader.vertexshader", "goal.fragmentshader");
+    GLuint GoalPointprogramID = LoadShaders( "goal.vertexshader", "goal.fragmentshader");
     GLint GoalpointMVP = glGetUniformLocation(GoalPointprogramID, "MVP_point");
-
+    GLuint handle = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
+    GLint handleMVP = glGetUniformLocation(GoalPointprogramID, "MVP_point");
     
     float* vertices = new float[3*number_of_vertices];
     for(int i=0; i<3*number_of_vertices;i+=3){
@@ -199,16 +202,25 @@ int main(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*number_of_faces*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW); 
 
-    float selected_point [9] ={
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f,
-        1.0f, 1.0f, 0.0f
+    float selected_point [] ={
+        1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f, 0.0f,0.0f,0.0f
     };
 
     GLuint PointBuffer;
     glGenBuffers(1, &PointBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
     glBufferData(GL_ARRAY_BUFFER,sizeof(selected_point), &selected_point[0], GL_DYNAMIC_DRAW);
+
+    float handle_point[] = {
+     1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f
+    };
+
+    GLuint handleBuffer;
+    glGenBuffers(1, &handleBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, handleBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(handle_point), &handle_point[0], GL_DYNAMIC_DRAW);
+
 
     float goal_point[3] = {
         1.0f,1.0f, 0.0f
@@ -232,7 +244,6 @@ int main(){
     for(int i=0; i<6*number_of_faces+6; i++){
         b1(i,0)=0;
         for (int j=0; j<2*number_of_vertices;j++){
-            A1(i,j)=0;
             vertex_new(j,0)= 0;
         }
     }
@@ -240,7 +251,6 @@ int main(){
         b2x(i,0)=0;
         b2y(i,0)=0;
         for (int j=0; j<number_of_vertices; j++){
-            A2(i,j)=0;
             V2x(j,0)=0;
             V2y(j,0)=0;
         }
@@ -272,6 +282,7 @@ int main(){
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //draws the triangles correctly as lines.
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
         GLint posAttrib = glGetAttribLocation(programID, "position");
         glEnableVertexAttribArray(posAttrib);
@@ -288,13 +299,19 @@ int main(){
         glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
         GLint posAttrib_p = glGetAttribLocation(PointprogramID, "position");
         glEnableVertexAttribArray(posAttrib_p);
+   
         glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
                               3, //size of vertex information
                               GL_FLOAT, //type of the data
                               GL_FALSE, //data is normalised
-                              0, //stride
+                              6*sizeof(float), //stride
                               0//offset, so where the data starts
         );  
+        
+        GLint colAttrib = glGetAttribLocation(PointprogramID, "Colour");
+        glEnableVertexAttribArray(colAttrib);
+        glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE,
+                       6*sizeof(float), (void*)(3*sizeof(float)));
 
         if (mouse_clicked){
             mouse_clicked = !mouse_clicked;
@@ -305,17 +322,44 @@ int main(){
                  
         }
         if (right_click==1){
-            mouse_to_world_goal(p_goal.x, p_goal.y, width, height, inverseProj); //maybe need to divide by scale; 
+            mouse_to_world_goal(p_goal.x, p_goal.y, width, height, inverseProj); 
             right_click = 0;
         }
-        for (int i=0; i<3; i++){
+     
+
+        for (int i=1; i<3; i++){
             ModelMatrix_point[0].x = scale*mouse_world[2*i];
             ModelMatrix_point[1].y = scale*mouse_world[2*i+1];
             MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
-            glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);        
+            glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);      
             glPointSize(10.0f);
             glDrawArrays(GL_POINTS, 0,1);
         }
+
+         glUseProgram(handle);
+        glBindBuffer(GL_ARRAY_BUFFER, handleBuffer);
+        GLint posAttrib_h = glGetAttribLocation(handle, "position");
+        glEnableVertexAttribArray(posAttrib_h);
+   
+        glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
+                              3, //size of vertex information
+                              GL_FLOAT, //type of the data
+                              GL_FALSE, //data is normalised
+                              6*sizeof(float), //stride
+                              0//offset, so where the data starts
+        );  
+        
+        GLint colAttrib_h = glGetAttribLocation(handle, "Colour");
+        glEnableVertexAttribArray(colAttrib_h);
+        glVertexAttribPointer(colAttrib_h, 3, GL_FLOAT, GL_FALSE,
+                       6*sizeof(float), (void*)(3*sizeof(float)));
+                       ModelMatrix_point[0].x = scale*mouse_world[0];
+            ModelMatrix_point[1].y = scale*mouse_world[1];
+            MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
+            glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);      
+            glPointSize(10.0f);
+            glDrawArrays(GL_POINTS, 0,1);
+
        
         glUseProgram(GoalPointprogramID);
         glBindBuffer(GL_ARRAY_BUFFER, GoalPointBuffer);
@@ -336,9 +380,9 @@ int main(){
         glPointSize(10.0f);
         glDrawArrays(GL_POINTS, 0,1);
 
-if (number_of_clicks ==3){
-    number_of_clicks = 0;
-}
+    if (number_of_clicks ==3){
+        number_of_clicks = 0;
+    }
 
 //--------------------------------------------------------------------- ------------------------------------------
 //ALGORITHM:
@@ -349,9 +393,9 @@ if (number_of_clicks ==3){
             glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        for(int i=0; i<3*number_of_vertices; i++){
-         V2[i] = vertices[i];
-     }
+            for(int i=0; i<3*number_of_vertices; i++){
+                V2[i] = vertices[i];
+            }
         }
 
         if ((p_goal.x !=p_previous.x)&&(p_goal.y!=p_previous.y)&&(!mesh_reset)){
@@ -559,6 +603,7 @@ if (number_of_clicks ==3){
 //----------------------------------------------------------------------------------------------------------------
 
         glDisableVertexAttribArray(0);
+         glDisableVertexAttribArray(1);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -570,11 +615,14 @@ if (number_of_clicks ==3){
     glDeleteBuffers(1, &vertexBuffer);
     glDeleteBuffers(1, &PointBuffer);
     glDeleteBuffers(1, &GoalPointBuffer);
+    glDeleteBuffers(1, &handleBuffer);
     glDeleteBuffers(1, &IBO);    
+   // glDeleteBuffers(1, &colorbuffer);
     glDeleteVertexArrays(1, &VertexArrayID);
     glDeleteProgram(programID);
     glDeleteProgram(PointprogramID);
     glDeleteProgram(GoalPointprogramID);
+    glDeleteProgram(handle);
     delete V;
     delete N;
     delete FN;
