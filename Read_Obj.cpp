@@ -11,11 +11,11 @@
 #include"readObj.hpp"
 
 
-ObjFile::ObjFile(const char* name){
+ObjFile::ObjFile(const char* name){ //OBJ file reader constructor.
   File_Name = name;
 }
 
- float* ObjFile::get_vertices(void){
+ float* ObjFile::get_vertices(void){ 
   char str[2];
   float f1, f2, f3;
   std::string s = "a";

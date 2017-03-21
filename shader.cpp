@@ -1,3 +1,5 @@
+// Function to load the vertex and fragment shaders.
+//source:: https://opengl-tutorial
 
 #include <string>
 #include <vector>

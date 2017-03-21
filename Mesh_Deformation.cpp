@@ -1,3 +1,4 @@
+//---------------------------COMPUTER ANIMATION AND GAMES 2: COURSE WORK 1--------------------------------------------------
 //Mesh Deformation
 //
 //Created by Catherine Taylor 24/02/17
@@ -17,9 +18,9 @@
 #include "readObj.hpp"
 #include <omp.h> 
 
-#define infinity 100000000
+#define infinity FLT_MAX
 
-struct Point {
+struct Point { //create sructure for selected points.
 	GLfloat x;
 	GLfloat y;
 };
@@ -32,11 +33,8 @@ GLfloat mouse_world [6] = {0,0,0,0,0,0};
 GLint vertex_pos[3]={0,0,0};
 int mesh_reset = 0;
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){ // if mouse clicked then carries out appropriate action.
     if(button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_PRESS){
-        if (number_of_clicks==3){
-            return;
-        }
         mouse_clicked = 1;
         number_of_clicks++;
         double xpos, ypos;
@@ -53,14 +51,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     }
 }
 
-void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){
+void mouse_to_world(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){ // mouse coords->screen coords-> world coords
     float x = (float)(-2.0f*mouse_x)/(float)width + 1, y = (float)(2.0f*mouse_y)/(float)height - 1;
     glm::vec4 V = glm::vec4(x, y, 0, 1);
     glm::vec4 world_coords = invProj*V;
     p.x = world_coords.x*world_coords.z/world_coords.w;
     p.y = world_coords.y*world_coords.z/world_coords.w;
 }
-void mouse_to_world_goal(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){
+void mouse_to_world_goal(double mouse_x, double mouse_y, int width, int height, glm::mat4 invProj){ 
     float x = (float)(-2.0f*mouse_x)/(float)width + 1, y = (float)(2.0f*mouse_y)/(float)height - 1;
     glm::vec4 V = glm::vec4(x, y, 0, 1);
     glm::vec4 world_coords = invProj*V;
@@ -82,7 +80,7 @@ void find_closest_vertex(float x_coord, float y_coord, float * vertices, int num
     p.y = vertices[min_index+1];
     vertex_pos[number_of_clicks-1]= min_index/3;
     }
-void reset(void){
+void reset(void){ 
     p.x=0;
     p.y=0;
     p_goal.x=0;
@@ -108,7 +106,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 int main(){
  
-    ObjFile mesh("dino.obj");
+    ObjFile mesh("dino.obj"); // load mesh information from object file.
     float* V = mesh.get_vertices();
     float* N = mesh.get_normals();
     int* FV = mesh.get_faceV();
@@ -128,15 +126,15 @@ int main(){
     int width =1280, height = 720;
     GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL", nullptr, nullptr);
 
-    glm::mat4 ModelMatrix = glm::mat4(scale);
+    glm::mat4 ModelMatrix = glm::mat4(scale); //Create MVP matrices.
     ModelMatrix[3].w = 1.0;
     glm::mat4 ViewMatrix = glm::lookAt(
-        glm::vec3(0,0,-4), // the position of your camera, in world space
+        glm::vec3(0,0,-4), // position of camera
         glm::vec3(0,0,1),  // look at vector
         glm::vec3(0,-1,0)  //look up vector
     );
     glm::mat4 projectionMatrix = glm::perspective(
-        glm::radians (90.0f),         // The horizontal Field of View, in degrees 
+        glm::radians (90.0f),         //FOV
         (float)width/(float)height, // Aspect Ratio. 
         0.1f,        // Near clipping plane. 
         100.0f       // Far clipping plane.
@@ -158,16 +156,15 @@ int main(){
     glewInit();
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // set background colour to white.
+    glfwSetMouseButtonCallback(window, mouse_button_callback); 
     glfwSetKeyCallback(window, key_callback);
     
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
-
-
+    //load shaders for mesh and selected points.
     GLuint programID = LoadShaders( "vertex_shader.vertexshader", "fragment_shader.fragmentshader" );
     GLint Mvp = glGetUniformLocation(programID, "MVP");
     GLuint PointprogramID = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
@@ -177,14 +174,14 @@ int main(){
     GLuint handle = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
     GLint handleMVP = glGetUniformLocation(GoalPointprogramID, "MVP_point");
     
-    float* vertices = new float[3*number_of_vertices];
+    float* vertices = new float[3*number_of_vertices]; // create array of vertices.
     for(int i=0; i<3*number_of_vertices;i+=3){
         vertices[i+1]=V[i];
         vertices[i]=-V[i+2];
         vertices[i+2]=V[i+1];
     }
 
-    unsigned int* indices = new unsigned int [3*number_of_faces];
+    unsigned int* indices = new unsigned int [3*number_of_faces]; // create array containing position of vertices.
     for(int i=0; i<3*number_of_faces; i+=3){
         indices[i]=FV[i]-1;
         indices[i+1]=FV[i+1]-1;
@@ -201,7 +198,7 @@ int main(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*number_of_faces*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW); 
 
-    float selected_point [] ={
+    float selected_point [] = {
         1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
         1.0f, 1.0f, 0.0f, 0.0f,0.0f,0.0f
     };
@@ -273,7 +270,7 @@ int main(){
         // Clear the screen
         glClear( GL_COLOR_BUFFER_BIT );
 
-        // Use our shader
+        // Use  shader
         glUseProgram(programID);
         glUniformMatrix4fv(Mvp, 1, GL_FALSE, &MVP[0][0]);
 
@@ -285,26 +282,26 @@ int main(){
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
         GLint posAttrib = glGetAttribLocation(programID, "position");
         glEnableVertexAttribArray(posAttrib);
-        glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
-                             3, //size of vertex information
-                             GL_FLOAT, //type of the data
-                             GL_FALSE, //data is normalised
-                             0, //stride
-                             0//offset, so where the data starts
+        glVertexAttribPointer(0, // 0  is vertex
+                             3, //size of information
+                             GL_FLOAT, // type of the data
+                             GL_FALSE, // normalised?
+                             0, // stride
+                             0 // offset
         );        
-        glDrawElements(GL_TRIANGLES, 3*number_of_faces,  GL_UNSIGNED_INT,0);
+        glDrawElements(GL_TRIANGLES, 3*number_of_faces,  GL_UNSIGNED_INT,0); // draw mesh
         
         glUseProgram(PointprogramID);
         glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
         GLint posAttrib_p = glGetAttribLocation(PointprogramID, "position");
         glEnableVertexAttribArray(posAttrib_p);
    
-        glVertexAttribPointer(0, //0 is a magic number which tells opengl what type of information it is, 0 =vertex
-                              3, //size of vertex information
-                              GL_FLOAT, //type of the data
-                              GL_FALSE, //data is normalised
-                              6*sizeof(float), //stride
-                              0//offset, so where the data starts
+        glVertexAttribPointer(0, 
+                              3, 
+                              GL_FLOAT, 
+                              GL_FALSE, 
+                              6*sizeof(float),
+                              0
         );  
         
         GLint colAttrib = glGetAttribLocation(PointprogramID, "Colour");
@@ -312,7 +309,7 @@ int main(){
         glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE,
                        6*sizeof(float), (void*)(3*sizeof(float)));
 
-        if (mouse_clicked){
+        if (mouse_clicked){ // react to user inputs and find handle and constraint positions.
             mouse_clicked = !mouse_clicked;
             mouse_to_world(p.x, p.y, width, height, inverseProj);
             find_closest_vertex(p.x, p.y, V2, number_of_vertices, scale);
@@ -320,7 +317,7 @@ int main(){
             mouse_world[2*(number_of_clicks-1)+1] = p.y;  
                  
         }
-        if (right_click==1){
+        if (right_click==1){ // find goal postion
             mouse_to_world_goal(p_goal.x, p_goal.y, width, height, inverseProj); 
             right_click = 0;
         }
@@ -332,10 +329,10 @@ int main(){
             MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
             glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);      
             glPointSize(10.0f);
-            glDrawArrays(GL_POINTS, 0,1);
+            glDrawArrays(GL_POINTS, 0,1); // draw selected points
         }
 
-         glUseProgram(handle);
+        glUseProgram(handle);
         glBindBuffer(GL_ARRAY_BUFFER, handleBuffer);
         GLint posAttrib_h = glGetAttribLocation(handle, "position");
         glEnableVertexAttribArray(posAttrib_h);
@@ -350,14 +347,19 @@ int main(){
         
         GLint colAttrib_h = glGetAttribLocation(handle, "Colour");
         glEnableVertexAttribArray(colAttrib_h);
-        glVertexAttribPointer(colAttrib_h, 3, GL_FLOAT, GL_FALSE,
-                       6*sizeof(float), (void*)(3*sizeof(float)));
-                       ModelMatrix_point[0].x = scale*mouse_world[0];
-            ModelMatrix_point[1].y = scale*mouse_world[1];
-            MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
-            glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);      
-            glPointSize(10.0f);
-            glDrawArrays(GL_POINTS, 0,1);
+        glVertexAttribPointer(colAttrib_h, 
+                                3,
+                                 GL_FLOAT,
+                                 GL_FALSE,
+                                6*sizeof(float), 
+                                (void*)(3*sizeof(float))
+                            );
+        ModelMatrix_point[0].x = scale*mouse_world[0];
+        ModelMatrix_point[1].y = scale*mouse_world[1];
+        MVP_point = projectionMatrix*ViewMatrix*ModelMatrix_point;
+        glUniformMatrix4fv(pointMVP, 1, GL_FALSE, &MVP_point[0][0]);      
+        glPointSize(10.0f);
+        glDrawArrays(GL_POINTS, 0,1);
 
        
         glUseProgram(GoalPointprogramID);
@@ -379,7 +381,7 @@ int main(){
         glPointSize(10.0f);
         glDrawArrays(GL_POINTS, 0,1);
 
-    if (number_of_clicks ==3){
+    if (number_of_clicks ==3){ // reset number of clicks.
         number_of_clicks = 0;
     }
 
@@ -397,7 +399,7 @@ int main(){
             }
         }
 
-        if ((p_goal.x !=p_previous.x)&&(p_goal.y!=p_previous.y)&&(!mesh_reset)){
+        if ((p_goal.x !=p_previous.x)&&(p_goal.y!=p_previous.y)&&(!mesh_reset)){ // if goal position changed then carry out algorithm and update mesh.
             p_previous.x=p_goal.x;
             p_previous.y=p_goal.y;
             for(int i=0; i<6*number_of_faces+6; i++){
@@ -621,7 +623,6 @@ int main(){
     glDeleteBuffers(1, &GoalPointBuffer);
     glDeleteBuffers(1, &handleBuffer);
     glDeleteBuffers(1, &IBO);    
-   // glDeleteBuffers(1, &colorbuffer);
     glDeleteVertexArrays(1, &VertexArrayID);
     glDeleteProgram(programID);
     glDeleteProgram(PointprogramID);
@@ -634,7 +635,6 @@ int main(){
     delete vertices;
     delete indices;
     delete V2;
-
     
     glfwTerminate();
 
