@@ -1,13 +1,13 @@
-# Mesh Deformation
+# Surface-Based Mesh Deformation
 
 ![c1](https://cloud.githubusercontent.com/assets/25514442/24172564/92dcb04a-0e80-11e7-9d0f-f3a3ba9ca8bb.PNG)
 
 
-Coursework for computer animation and games module. Carries out surface-based mesh deformation for a 2D triangular mesh.
+Coursework for EngD computer animation and games 2 module. Carries out surface-based mesh deformation for a 2D triangular mesh.
 
-### Dependencies
+### Dependencies:
 
-To run, this code must be linked to the following 5 libraries.
+To run successfully, this code must be linked to the following 5 libraries.
 
 * OpenGl
 * GLEW 
@@ -15,7 +15,7 @@ To run, this code must be linked to the following 5 libraries.
 * GLM
 * Eigen
 
-### How to compile
+### How to compile:
 
 CL:
 
