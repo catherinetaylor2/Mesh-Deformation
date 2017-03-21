@@ -1,6 +1,7 @@
 # Mesh Deformation
 
-![c0](https://cloud.githubusercontent.com/assets/25514442/24153203/b5e0d6e2-0e45-11e7-854b-72ecb5b13b7b.PNG)
+![c1](https://cloud.githubusercontent.com/assets/25514442/24172564/92dcb04a-0e80-11e7-9d0f-f3a3ba9ca8bb.PNG)
+
 
 Coursework for computer animation and games module. Carries out surface-based mesh deformation for a 2D triangular mesh.
 
