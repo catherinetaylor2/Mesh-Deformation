@@ -10,7 +10,6 @@ Left click to select handles and right click to choose goal position. Everything
 ###To do:
   
 * Add in arrays for texture values in Read_Obj.
-* Reduce run time.
-* Look at 3D methods. 
+ 
 
 
