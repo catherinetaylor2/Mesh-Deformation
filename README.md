@@ -12,4 +12,4 @@ Left click to select handles and right click to choose goal position. Everything
 * Add in arrays for texture values in Read_Obj.
  
 
- 
+ ![c0](https://cloud.githubusercontent.com/assets/25514442/24153203/b5e0d6e2-0e45-11e7-854b-72ecb5b13b7b.PNG)
