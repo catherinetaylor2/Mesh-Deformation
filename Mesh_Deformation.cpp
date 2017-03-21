@@ -10,8 +10,7 @@
 #include <cmath>
 #include <string>
 #include <cstdio>
-#include <iostream>
-#include <glm/glm.hpp>
+ #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include "shader.hpp"
 #include <Eigen/Eigen/Dense>
@@ -231,7 +230,7 @@ int main(){
     glBindBuffer(GL_ARRAY_BUFFER, GoalPointBuffer);
     glBufferData(GL_ARRAY_BUFFER,sizeof(goal_point), &goal_point[0], GL_DYNAMIC_DRAW);
 //-------------------------------------------------------------------------------------------------------------------------------------------
-//ALGORITHM
+//ALGORITHM - calculations outwith draw loop to speed up.
 
     int w=1000;
     Eigen::MatrixXf b1(6*number_of_faces+6,1), G(8,4), G_no_vr(6,4), A1(6*number_of_faces+6, 2*number_of_vertices), edges(2,8), vertex_new(2*number_of_vertices, 1), A2(3*number_of_faces+3, number_of_vertices), b2x (3*number_of_faces + 3,1), b2y(3*number_of_faces + 3,1), V2x(number_of_vertices,1), V2y(number_of_vertices,1);
@@ -599,7 +598,12 @@ int main(){
             glBufferSubData(GL_ARRAY_BUFFER, 0,  3*number_of_vertices*sizeof(float), &V2[0]);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
-  
+    // std::ofstream myfile; //CODE FOR SAVING NEW VERTEX POS FOR KEY FRAMES.
+    // myfile.open("new_vertex_positions.txt");
+    // for (int i = 0; i<number_of_vertices; i++){
+    //     myfile<< "v"<<" "<<V2[3*i]<<" "<<V2[3*i+1]<<" "<<V2[3*i+2]<<"\n";
+    // }
+    // myfile.close();
 //----------------------------------------------------------------------------------------------------------------
 
         glDisableVertexAttribArray(0);
