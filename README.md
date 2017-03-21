@@ -1,5 +1,5 @@
-#Mesh Deformation
-###Created by Catherine Taylor
+# Mesh Deformation
+### Created by Catherine Taylor
 
 Coursework for computer animation and games module.
 
@@ -7,9 +7,9 @@ Input a traingulated mesh in a .obj function and Read_Obj can return arrays cont
 
 Left click to select handles and right click to choose goal position. Everything can be reset by hitting enter key.
 
-###To do:
+### To do:
   
 * Add in arrays for texture values in Read_Obj.
  
 
-
+ 
