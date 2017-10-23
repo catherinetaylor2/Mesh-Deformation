@@ -3,8 +3,8 @@
 //
 //Created by Catherine Taylor 24/02/17
 
-#include <glew.h>
-#include <glfw3.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -14,9 +14,9 @@
  #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include "shader.hpp"
-#include <Eigen/Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 #include "readObj.hpp"
-#include <omp.h> 
+
 
 #define infinity FLT_MAX
 
@@ -104,13 +104,15 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
-int main(){
+int main(int argc, char *argv[]){
  
-    ObjFile mesh("dino.obj"); // load mesh information from object file.
-    float* V = mesh.get_vertices();
-    float* N = mesh.get_normals();
-    int* FV = mesh.get_faceV();
-    int* FN = mesh.get_faceN();
+    ObjFile mesh("mesh/dino.obj"); // load mesh information from object file.
+	float* V , *N, *VT;
+    int *FV, *FN, *F_VT;
+    mesh.get_vertices(&V);
+    mesh.get_texture(&VT);
+    mesh.get_normals(&N);
+    mesh.get_face_data(&FV, &FN, &F_VT);
     int number_of_faces = mesh.get_number_of_faces();
     int number_of_vertices = mesh.get_number_of_vertices();
     float scale = 0.2;
@@ -165,13 +167,13 @@ int main(){
     glBindVertexArray(VertexArrayID);
 
     //load shaders for mesh and selected points.
-    GLuint programID = LoadShaders( "vertex_shader.vertexshader", "fragment_shader.fragmentshader" );
+    GLuint programID = LoadShaders( "shaders/vertex_shader.glsl", "shaders/fragment_shader.glsl" );
     GLint Mvp = glGetUniformLocation(programID, "MVP");
-    GLuint PointprogramID = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
+    GLuint PointprogramID = LoadShaders( "shaders/point_vertexShader.glsl", "shaders/point_fragmentShader.glsl");
     GLint pointMVP = glGetUniformLocation(PointprogramID, "MVP_point");
-    GLuint GoalPointprogramID = LoadShaders( "goal.vertexshader", "goal.fragmentshader");
+    GLuint GoalPointprogramID = LoadShaders( "shaders/goal_v.glsl", "shaders/goal.glsl");
     GLint GoalpointMVP = glGetUniformLocation(GoalPointprogramID, "MVP_point");
-    GLuint handle = LoadShaders( "point_vertexShader.vertexshader", "point_fragmentShader.fragmentshader");
+    GLuint handle = LoadShaders( "shaders/point_vertexShader.glsl", "shaders/point_fragmentShader.glsl");
     GLint handleMVP = glGetUniformLocation(GoalPointprogramID, "MVP_point");
     
     float* vertices = new float[3*number_of_vertices]; // create array of vertices.
@@ -265,7 +267,7 @@ int main(){
 
 //---------------------------------------------------------------------------------------------------------------------------------------------
 
-    while(!glfwWindowShouldClose(window)){
+  do{
 
         // Clear the screen
         glClear( GL_COLOR_BUFFER_BIT );
@@ -612,10 +614,7 @@ int main(){
          glDisableVertexAttribArray(1);
         glfwSwapBuffers(window);
         glfwPollEvents();
-    }
-
-    while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-        glfwWindowShouldClose(window) == 0 );
+    }while(glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS && glfwWindowShouldClose(window)==0); 
 
     //Delete to prevent memory leaks.
     glDeleteBuffers(1, &vertexBuffer);
@@ -628,13 +627,13 @@ int main(){
     glDeleteProgram(PointprogramID);
     glDeleteProgram(GoalPointprogramID);
     glDeleteProgram(handle);
-    delete V;
-    delete N;
-    delete FN;
-    delete FV;
-    delete vertices;
-    delete indices;
-    delete V2;
+    delete[] V;
+    delete[] N;
+    delete[] FN;
+    delete[] FV;
+    delete[] vertices;
+    delete[] indices;
+    delete[] V2;
     
     glfwTerminate();
 
