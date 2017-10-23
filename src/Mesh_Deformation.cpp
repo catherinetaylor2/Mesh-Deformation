@@ -65,10 +65,10 @@ void mouse_to_world_goal(double mouse_x, double mouse_y, int width, int height, 
     p_goal.x = world_coords.x*world_coords.z/world_coords.w;
     p_goal.y = world_coords.y*world_coords.z/world_coords.w;
 }
-void find_closest_vertex(float x_coord, float y_coord, float * vertices, int number_of_vertices, float scale){
+void find_closest_vertex(float x_coord, float y_coord, float * vertices, int numberOfVertices, float scale){
     float min_distance = infinity, d= infinity;
     int min_index = 0;
-    for(int i=0; i<number_of_vertices; i++){
+    for(int i=0; i<numberOfVertices; i++){
         float x = vertices[3*i], y = vertices[3*i+1];
         d = sqrt((x_coord/scale - x)*(x_coord/scale - x)+(y_coord/scale - y)*(y_coord/scale -y));
         if (d<min_distance){
@@ -106,15 +106,25 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 int main(int argc, char *argv[]){
  
-    ObjFile mesh("../mesh/dino.obj"); // load mesh information from object file.
+  //  ObjFile mesh("../mesh/dino.obj"); // load mesh information from object file.
 	float* V , *N, *VT;
     int *FV, *FN, *F_VT;
-    mesh.get_vertices(&V);
-    mesh.get_texture(&VT);
-    mesh.get_normals(&N);
-    mesh.get_face_data(&FV, &FN, &F_VT);
-    int number_of_faces = mesh.get_number_of_faces();
-    int number_of_vertices = mesh.get_number_of_vertices();
+ //   mesh.get_vertices(&V);
+   // mesh.get_texture(&VT);
+    //mesh.get_normals(&N);
+    //mesh.get_face_data(&FV, &FN, &F_VT);
+    int numberOfFaces, numberOfVertices;
+    //int numberOfFaces = mesh.get_numberOfFaces();
+    //int numberOfVertices = mesh.get_numberOfVertices();
+
+    ObjFile DinoMesh("../mesh/dino.obj");
+    if(!DinoMesh.doesExist()){
+        std::cerr<<"Error: Object does not exist \n";
+        return false;
+    }
+	DinoMesh.getMeshData(DinoMesh, &FV, &FN, &F_VT, &VT, &N, &V, &numberOfFaces, &numberOfVertices);
+
+
     float scale = 0.2;
     
     glfwInit();
@@ -176,15 +186,15 @@ int main(int argc, char *argv[]){
     GLuint handle = LoadShaders( "shaders/point_vertexShader.glsl", "shaders/point_fragmentShader.glsl");
     GLint handleMVP = glGetUniformLocation(GoalPointprogramID, "MVP_point");
     
-    float* vertices = new float[3*number_of_vertices]; // create array of vertices.
-    for(int i=0; i<3*number_of_vertices;i+=3){
+    float* vertices = new float[3*numberOfVertices]; // create array of vertices.
+    for(int i=0; i<3*numberOfVertices;i+=3){
         vertices[i+1]=V[i];
         vertices[i]=-V[i+2];
         vertices[i+2]=V[i+1];
     }
 
-    unsigned int* indices = new unsigned int [3*number_of_faces]; // create array containing position of vertices.
-    for(int i=0; i<3*number_of_faces; i+=3){
+    unsigned int* indices = new unsigned int [3*numberOfFaces]; // create array containing position of vertices.
+    for(int i=0; i<3*numberOfFaces; i+=3){
         indices[i]=FV[i]-1;
         indices[i+1]=FV[i+1]-1;
         indices[i+2]=FV[i+2]-1;   
@@ -193,12 +203,12 @@ int main(int argc, char *argv[]){
     GLuint vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3*numberOfVertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
 
     GLuint IBO;
     glGenBuffers(1, &IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*number_of_faces*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW); 
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*numberOfFaces*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW); 
 
     float selected_point [] = {
         1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
@@ -232,23 +242,23 @@ int main(int argc, char *argv[]){
 //ALGORITHM - calculations outwith draw loop to speed up.
 
     int w=1000;
-    Eigen::MatrixXf b1(6*number_of_faces+6,1), G(8,4), G_no_vr(6,4), A1(6*number_of_faces+6, 2*number_of_vertices), edges(2,8), vertex_new(2*number_of_vertices, 1), A2(3*number_of_faces+3, number_of_vertices), b2x (3*number_of_faces + 3,1), b2y(3*number_of_faces + 3,1), V2x(number_of_vertices,1), V2y(number_of_vertices,1);
-     float* V2 = new float[3*number_of_vertices];
+    Eigen::MatrixXf b1(6*numberOfFaces+6,1), G(8,4), G_no_vr(6,4), A1(6*numberOfFaces+6, 2*numberOfVertices), edges(2,8), vertex_new(2*numberOfVertices, 1), A2(3*numberOfFaces+3, numberOfVertices), b2x (3*numberOfFaces + 3,1), b2y(3*numberOfFaces + 3,1), V2x(numberOfVertices,1), V2y(numberOfVertices,1);
+     float* V2 = new float[3*numberOfVertices];
 
-     for(int i=0; i<3*number_of_vertices; i++){
+     for(int i=0; i<3*numberOfVertices; i++){
          V2[i] = vertices[i];
      }
 
-    for(int i=0; i<6*number_of_faces+6; i++){
+    for(int i=0; i<6*numberOfFaces+6; i++){
         b1(i,0)=0;
-        for (int j=0; j<2*number_of_vertices;j++){
+        for (int j=0; j<2*numberOfVertices;j++){
             vertex_new(j,0)= 0;
         }
     }
-    for (int i =0; i<3*number_of_faces+3; i++){
+    for (int i =0; i<3*numberOfFaces+3; i++){
         b2x(i,0)=0;
         b2y(i,0)=0;
-        for (int j=0; j<number_of_vertices; j++){
+        for (int j=0; j<numberOfVertices; j++){
             V2x(j,0)=0;
             V2y(j,0)=0;
         }
@@ -291,7 +301,7 @@ int main(int argc, char *argv[]){
                              0, // stride
                              0 // offset
         );        
-        glDrawElements(GL_TRIANGLES, 3*number_of_faces,  GL_UNSIGNED_INT,0); // draw mesh
+        glDrawElements(GL_TRIANGLES, 3*numberOfFaces,  GL_UNSIGNED_INT,0); // draw mesh
         
         glUseProgram(PointprogramID);
         glBindBuffer(GL_ARRAY_BUFFER, PointBuffer);
@@ -314,7 +324,7 @@ int main(int argc, char *argv[]){
         if (mouse_clicked){ // react to user inputs and find handle and constraint positions.
             mouse_clicked = !mouse_clicked;
             mouse_to_world(p.x, p.y, width, height, inverseProj);
-            find_closest_vertex(p.x, p.y, V2, number_of_vertices, scale);
+            find_closest_vertex(p.x, p.y, V2, numberOfVertices, scale);
             mouse_world[2*(number_of_clicks-1)] = p.x;
             mouse_world[2*(number_of_clicks-1)+1] = p.y;  
                  
@@ -393,10 +403,10 @@ int main(int argc, char *argv[]){
         if (mesh_reset){ //MESH RESET FN
             mesh_reset = !mesh_reset; 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-            glBufferData(GL_ARRAY_BUFFER, 3*number_of_vertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, 3*numberOfVertices*sizeof(float),  &vertices[0], GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-            for(int i=0; i<3*number_of_vertices; i++){
+            for(int i=0; i<3*numberOfVertices; i++){
                 V2[i] = vertices[i];
             }
         }
@@ -404,39 +414,39 @@ int main(int argc, char *argv[]){
         if ((p_goal.x !=p_previous.x)&&(p_goal.y!=p_previous.y)&&(!mesh_reset)){ // if goal position changed then carry out algorithm and update mesh.
             p_previous.x=p_goal.x;
             p_previous.y=p_goal.y;
-            for(int i=0; i<6*number_of_faces+6; i++){
-                for (int j=0; j<2*number_of_vertices;j++){
+            for(int i=0; i<6*numberOfFaces+6; i++){
+                for (int j=0; j<2*numberOfVertices;j++){
                     A1(i,j)=0;
                 }
             }
-            for (int i =0; i<3*number_of_faces+3; i++){
-                for (int j=0; j<number_of_vertices; j++){
+            for (int i =0; i<3*numberOfFaces+3; i++){
+                for (int j=0; j<numberOfVertices; j++){
                   A2(i,j)=0;
                 }
             }
             
             int vi, vj, vl, vr = 1000;
             float ex, ey;
-            Eigen::MatrixXf E(2,2), H,  v(8,1), v_no_vr(6,1), t, T(2,2), b, vr_exist(3*number_of_faces,1);
+            Eigen::MatrixXf E(2,2), H,  v(8,1), v_no_vr(6,1), t, T(2,2), b, vr_exist(3*numberOfFaces,1);
              
-            b1(6*number_of_faces) = w*p_goal.x/scale;
-            b1(6*number_of_faces+1) = w*p_goal.y/scale;
-            b2x(3*number_of_faces) = w*p_goal.x/scale; // divide by scale
-            b2y(3*number_of_faces) = w*p_goal.y/scale;
+            b1(6*numberOfFaces) = w*p_goal.x/scale;
+            b1(6*numberOfFaces+1) = w*p_goal.y/scale;
+            b2x(3*numberOfFaces) = w*p_goal.x/scale; // divide by scale
+            b2y(3*numberOfFaces) = w*p_goal.y/scale;
 
             for (int i=0; i<3; i++){
-                A1(6*number_of_faces + 2*i, 2*vertex_pos[i]) = w;
-                A1(6*number_of_faces + 2*i+1, 2*vertex_pos[i]+1)=w;
-                A2(3*number_of_faces+i,vertex_pos[i] )=w;
+                A1(6*numberOfFaces + 2*i, 2*vertex_pos[i]) = w;
+                A1(6*numberOfFaces + 2*i+1, 2*vertex_pos[i]+1)=w;
+                A2(3*numberOfFaces+i,vertex_pos[i] )=w;
             }
             for (int i=1; i<5;i++){
-            b1(6*number_of_faces+1+i) = w*mouse_world[i+1];
+            b1(6*numberOfFaces+1+i) = w*mouse_world[i+1];
             }
             for (int i=1; i<3; i++){
-                b2x(3*number_of_faces+i) = w*mouse_world[2*i];
-                b2y(3*number_of_faces+i) = w*mouse_world[2*i+1];
+                b2x(3*numberOfFaces+i) = w*mouse_world[2*i];
+                b2y(3*numberOfFaces+i) = w*mouse_world[2*i+1];
             }
-            for(int i =0; i<number_of_faces; i++){
+            for(int i =0; i<numberOfFaces; i++){
                 A2(3*i, FV[3*i]-1) = -1;
                 A2(3*i, FV[3*i+1]-1)=1;
                 A2(3*i +1 , FV[3*i+1]-1) = -1;
@@ -455,7 +465,7 @@ int main(int argc, char *argv[]){
                     E(1,0) = ey;
                     E(1,1)=-ex;
 
-                    for (int k=0; k<number_of_faces; k++){
+                    for (int k=0; k<numberOfFaces; k++){
                         if (((vi == FV[3*k]-1)|(vi == FV[3*k+1]-1)|(vi==FV[3*k+2]-1))&((vj == FV[3*k]-1)|(vj == FV[3*k+1]-1)|(vj == FV[3*k+2]-1))&(vl !=FV[3*k]-1)&(vl!=FV[3*k+1]-1)&(vl!=FV[3*k+2]-1)){
                             vr = (vi!=FV[3*k]-1)*(vj!=FV[3*k]-1)*FV[3*k] + (vi!=FV[3*k + 1]-1)*(vj!=FV[3*k+1]-1)*FV[3*k+1]+(vi!=FV[3*k + 2]-1)*(vj!=FV[3*k+2]-1)*FV[3*k+2]-1;
                         }
@@ -525,7 +535,7 @@ int main(int argc, char *argv[]){
             }
             vertex_new = (A1.transpose()*A1).llt().solve(A1.transpose()*b1);
 
-            for(int i =0; i<number_of_faces; i++){
+            for(int i =0; i<numberOfFaces; i++){
                 for(int j=0; j<3;j++){
 
                     vi = FV[3*i + j]-1;
@@ -592,19 +602,19 @@ int main(int argc, char *argv[]){
             V2x = (A2.transpose()*A2).llt().solve(A2.transpose()*b2x);
             V2y = (A2.transpose()*A2).llt().solve(A2.transpose()*b2y);
 
-            for (int i=0; i<number_of_vertices; i++){
+            for (int i=0; i<numberOfVertices; i++){
                 V2[3*i] = V2x(i,0);
                 V2[3*i + 1]= V2y(i,0);
                 V2[3*i + 2] = 0;
             }
 
             glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-            glBufferSubData(GL_ARRAY_BUFFER, 0,  3*number_of_vertices*sizeof(float), &V2[0]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0,  3*numberOfVertices*sizeof(float), &V2[0]);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
     // std::ofstream myfile; //CODE FOR SAVING NEW VERTEX POS FOR KEY FRAMES.
     // myfile.open("new_vertex_positions.txt");
-    // for (int i = 0; i<number_of_vertices; i++){
+    // for (int i = 0; i<numberOfVertices; i++){
     //     myfile<< "v"<<" "<<V2[3*i]<<" "<<V2[3*i+1]<<" "<<V2[3*i+2]<<"\n";
     // }
     // myfile.close();
