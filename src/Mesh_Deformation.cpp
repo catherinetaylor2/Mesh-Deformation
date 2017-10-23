@@ -106,7 +106,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 int main(int argc, char *argv[]){
  
-    ObjFile mesh("mesh/dino.obj"); // load mesh information from object file.
+    ObjFile mesh("../mesh/dino.obj"); // load mesh information from object file.
 	float* V , *N, *VT;
     int *FV, *FN, *F_VT;
     mesh.get_vertices(&V);
