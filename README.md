@@ -7,12 +7,13 @@ Coursework for EngD computer animation and games 2 module. Carries out surface-b
 
 ### Dependencies:
 
-To run successfully, this code must be linked to the following 4 libraries.
+To run successfully, this code must be linked to the following 5 libraries.
 
 * OpenGl
 * GLEW 
 * GLFW3
 * GLM
+* Eigen
 
 ### How to compile:
 
