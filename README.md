@@ -22,7 +22,7 @@ CL on Windows:
 
 Clang on Linux:
 
-    clang++ -std=c++11 -I/usr/include -lGLEW -lglfw -lGL Mesh_Deformation.cpp Read_Obj.cpp readObj.hpp shader.cpp shader.hpp
+    clang++ -std=c++11 -I/usr/include -lGLEW -lglfw -lGL Mesh_Deformation.cpp readObj.cpp readObj.hpp shader.cpp shader.hpp
 
 
 ### To Run:
